@@ -14,6 +14,8 @@ ifneq (,$(wildcard $(SETUP_FILE)))
 	include $(SETUP_FILE)
 endif
 
+BUILD_PATH_POSTFIX ?=
+
 # To workaround macos SIP: https://github.com/solvcon/modmesh/pull/16.
 # Additional configuration can be loaded from SETUP_FILE.
 RUNENV += PYTHONPATH=$(MODMESH_ROOT)
@@ -52,8 +54,6 @@ export DIRNAME_PYTHON := $(dir $(REALPATH_PYTHON))
 
 pyextsuffix := $(shell $(DIRNAME_PYTHON)/python3-config --extension-suffix)
 pyvminor := $(shell python3 -c 'import sys; print("%d%d" % sys.version_info[0:2])')
-
-BUILD_PATH_POSTFIX ?=
 
 ifeq ($(CMAKE_BUILD_TYPE), Debug)
 	BUILD_PATH ?= build/dbg$(pyvminor)$(BUILD_PATH_POSTFIX)
