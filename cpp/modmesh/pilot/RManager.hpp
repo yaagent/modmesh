@@ -77,6 +77,8 @@ public:
 
     void quit() { m_core->quit(); }
 
+    void reset();
+
     void toggleConsole();
 
 private:
@@ -93,6 +95,7 @@ private:
     std::function<void()> createCameraMovementItemHandler(const std::function<void(CameraInputState &)> &) const;
 
     bool m_already_setup = false;
+    bool m_owns_core = false;
 
     QCoreApplication * m_core = nullptr;
 

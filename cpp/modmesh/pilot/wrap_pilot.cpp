@@ -573,6 +573,19 @@ void wrap_pilot(pybind11::module & mod)
     {
         std::cerr << e.what() << std::endl;
     }
+
+    // Register a Python atexit handler to destroy QApplication while Python
+    // is still fully alive.  If ~RManager() fires first (static destruction),
+    // reset() is a no-op because m_owns_core will already be false.
+    try
+    {
+        py::module_::import("atexit").attr("register")(
+            py::cpp_function([]() { RManager::instance().reset(); }));
+    }
+    catch (const pybind11::error_already_set & e)
+    {
+        std::cerr << e.what() << std::endl;
+    }
 }
 
 struct view_pymod_tag;

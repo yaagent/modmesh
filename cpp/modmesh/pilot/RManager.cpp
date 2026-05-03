@@ -56,6 +56,7 @@ RManager::RManager()
     if (nullptr == m_core)
     {
         m_core = new QApplication(argc, argv);
+        m_owns_core = true;
     }
 
     m_mainWindow = new QMainWindow;
@@ -77,8 +78,34 @@ RManager & RManager::setUp()
     return *this;
 }
 
+void RManager::reset()
+{
+    if (m_owns_core)
+    {
+        // Null all child pointers before destroying QApplication.
+        // Qt's parent-child mechanism will delete widget children; we only
+        // need to ensure our raw pointers don't dangle after the call.
+        m_mainWindow = nullptr;
+        m_pycon = nullptr;
+        m_mdiArea = nullptr;
+        m_fileMenu = nullptr;
+        m_viewMenu = nullptr;
+        m_oneMenu = nullptr;
+        m_meshMenu = nullptr;
+        m_canvasMenu = nullptr;
+        m_profilingMenu = nullptr;
+        m_windowMenu = nullptr;
+        m_already_setup = false;
+
+        delete m_core;
+        m_core = nullptr;
+        m_owns_core = false;
+    }
+}
+
 RManager::~RManager()
 {
+    reset();
 }
 
 R3DWidget * RManager::add3DWidget()
