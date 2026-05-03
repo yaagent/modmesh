@@ -14,8 +14,8 @@ ifneq (,$(wildcard $(SETUP_FILE)))
 	include $(SETUP_FILE)
 endif
 
-# Optional postfix appended to the auto-computed BUILD_PATH (e.g. BUILD_PATH_POSTFIX=_noqt).
-BUILD_PATH_POSTFIX ?=
+# Optional extension appended to the auto-computed BUILD_PATH (e.g. BUILD_PATH_EXT=_noqt).
+BUILD_PATH_EXT ?=
 
 # To workaround macos SIP: https://github.com/solvcon/modmesh/pull/16.
 # Additional configuration can be loaded from SETUP_FILE.
@@ -57,9 +57,9 @@ pyextsuffix := $(shell $(DIRNAME_PYTHON)/python3-config --extension-suffix)
 pyvminor := $(shell python3 -c 'import sys; print("%d%d" % sys.version_info[0:2])')
 
 ifeq ($(CMAKE_BUILD_TYPE), Debug)
-	BUILD_PATH ?= build/dbg$(pyvminor)$(BUILD_PATH_POSTFIX)
+	BUILD_PATH ?= build/dbg$(pyvminor)$(BUILD_PATH_EXT)
 else
-	BUILD_PATH ?= build/dev$(pyvminor)$(BUILD_PATH_POSTFIX)
+	BUILD_PATH ?= build/dev$(pyvminor)$(BUILD_PATH_EXT)
 endif
 export BUILD_PATH
 
