@@ -14,6 +14,7 @@ ifneq (,$(wildcard $(SETUP_FILE)))
 	include $(SETUP_FILE)
 endif
 
+# Optional postfix appended to the auto-computed BUILD_PATH (e.g. BUILD_PATH_POSTFIX=_noqt).
 BUILD_PATH_POSTFIX ?=
 
 # To workaround macos SIP: https://github.com/solvcon/modmesh/pull/16.
