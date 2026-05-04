@@ -55,8 +55,8 @@ class RMenu
 
 public:
 
-    using QMenu::QMenu;
     using QMenu::addAction; ///< keep all QMenu overloads visible
+    using QMenu::QMenu;
 
     RAction * addAction(
         std::string const & text,
