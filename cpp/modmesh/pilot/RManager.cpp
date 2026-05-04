@@ -31,6 +31,7 @@
 #include <vector>
 
 #include <modmesh/pilot/RAction.hpp>
+#include <modmesh/pilot/RMenu.hpp>
 #include <Qt>
 #include <QMenuBar>
 #include <QMenu>
@@ -147,22 +148,29 @@ void RManager::setUpCentral()
 
 void RManager::setUpMenu()
 {
-    m_mainWindow->setMenuBar(new QMenuBar(nullptr));
+    auto * menubar = new QMenuBar(nullptr);
+    m_mainWindow->setMenuBar(menubar);
     // NOTE: All menus need to be populated or Windows may crash with
     // "exited with code -1073740791".  The reason is not yet clarified.
 
-    m_fileMenu = m_mainWindow->menuBar()->addMenu(QString("File"));
-    m_viewMenu = m_mainWindow->menuBar()->addMenu(QString("View"));
+    auto addMenu = [&](char const * title) -> RMenu *
     {
-        // Code for controlling camera is not exposed to Python yet
+        auto * menu = new RMenu(QString(title), menubar);
+        menubar->addMenu(menu);
+        return menu;
+    };
+
+    m_fileMenu = addMenu("File");
+    m_viewMenu = addMenu("View");
+    {
         setUpCameraControllersMenuItems();
         setUpCameraMovementMenuItems();
     }
-    m_oneMenu = m_mainWindow->menuBar()->addMenu(QString("One"));
-    m_meshMenu = m_mainWindow->menuBar()->addMenu(QString("Mesh"));
-    m_canvasMenu = m_mainWindow->menuBar()->addMenu(QString("Canvas"));
-    m_profilingMenu = m_mainWindow->menuBar()->addMenu(QString("Profiling"));
-    m_windowMenu = m_mainWindow->menuBar()->addMenu(QString("Window"));
+    m_oneMenu = addMenu("One");
+    m_meshMenu = addMenu("Mesh");
+    m_canvasMenu = addMenu("Canvas");
+    m_profilingMenu = addMenu("Profiling");
+    m_windowMenu = addMenu("Window");
 }
 
 void RManager::setUpCameraControllersMenuItems() const
