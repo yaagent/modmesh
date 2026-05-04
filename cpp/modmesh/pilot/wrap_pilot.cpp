@@ -394,6 +394,20 @@ class MODMESH_PYTHON_WRAPPER_VISIBILITY WrapRManager
         namespace py = pybind11;
 
         (*this)
+            .def(
+                "addMenu",
+                [](wrapped_type & self, std::string const & title) -> RMenu *
+                {
+                    return self.addMenu(title);
+                },
+                py::arg("title"),
+                py::return_value_policy::reference)
+            .def(
+                "addViewMenuCameraItems",
+                [](wrapped_type & self)
+                {
+                    self.addViewMenuCameraItems();
+                })
             .def_property_readonly(
                 "mainWindow",
                 [](wrapped_type & self) -> QMainWindow *
