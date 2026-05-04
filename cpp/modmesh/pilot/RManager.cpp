@@ -81,17 +81,12 @@ void RManager::reset()
     // Qt's parent-child mechanism will delete widget children; we only
     // need to ensure our raw pointers don't dangle after the call.
     m_already_setup = false;
-    m_core.reset();
-    m_mainWindow = nullptr;
-    m_fileMenu = nullptr;
-    m_viewMenu = nullptr;
-    m_oneMenu = nullptr;
-    m_meshMenu = nullptr;
-    m_canvasMenu = nullptr;
-    m_profilingMenu = nullptr;
-    m_windowMenu = nullptr;
+    m_menus.clear();
+    m_menuBar = nullptr;
     m_pycon = nullptr;
     m_mdiArea = nullptr;
+    m_mainWindow = nullptr;
+    m_core.reset();
 }
 
 RManager::~RManager()
