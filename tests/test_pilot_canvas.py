@@ -198,4 +198,36 @@ class BezierSamplerTC(unittest.TestCase):
         # No auxiliary segments at all
         self.assertEqual(w.nsegment, 0)
 
+
+class ShapeCreateDialogTC(unittest.TestCase):
+    """Tests for ShapeCreateDialog that do not require a display."""
+
+    def _make_dlg(self, title, fields):
+        return _canvas.ShapeCreateDialog(title=title, fields=fields)
+
+    def test_values_reflect_defaults(self):
+        dlg = self._make_dlg(
+            "Test", [("x0", 1.5), ("y0", -2.0), ("r", 3.25)])
+        v = dlg.values()
+        self.assertAlmostEqual(v["x0"], 1.5)
+        self.assertAlmostEqual(v["y0"], -2.0)
+        self.assertAlmostEqual(v["r"], 3.25)
+
+    def test_field_names_preserved(self):
+        fields = [("x_min", 0.0), ("y_min", 0.0),
+                  ("x_max", 4.0), ("y_max", 2.0)]
+        dlg = self._make_dlg("Rectangle", fields)
+        v = dlg.values()
+        self.assertEqual(set(v.keys()), {"x_min", "y_min", "x_max", "y_max"})
+
+    def test_empty_fields(self):
+        dlg = self._make_dlg("Empty", [])
+        self.assertEqual(dlg.values(), {})
+
+    def test_single_field(self):
+        dlg = self._make_dlg("Radius", [("r", 2.5)])
+        v = dlg.values()
+        self.assertAlmostEqual(v["r"], 2.5)
+
+
 # vim: set ff=unix fenc=utf8 et sw=4 ts=4 sts=4:

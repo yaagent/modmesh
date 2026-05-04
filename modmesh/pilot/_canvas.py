@@ -30,12 +30,15 @@ Canvas utilities and curve/conic drawing utilities for pilot GUI.
 
 import numpy as np
 
+from PySide6 import QtWidgets
+
 from .. import core, plot
 
 from . import _gui_common
 
 __all__ = [
     'Canvas',
+    'ShapeCreateDialog',
     'CurveSampler',
     'Ellipse',
     'Parabola',
@@ -56,6 +59,55 @@ class Canvas(_gui_common.PilotFeature):
         self._widget = None
 
     def populate_menu(self):
+        self._add_menu_item(
+            menu=self._mgr.canvasMenu,
+            text="Clear Canvas",
+            tip="Remove all shapes and clear the canvas",
+            func=self._clear_canvas,
+        )
+
+        self._mgr.canvasMenu.addSeparator()
+
+        self._add_menu_item(
+            menu=self._mgr.canvasMenu,
+            text="Add Line...",
+            tip="Create a line segment by specifying two endpoints",
+            func=self._add_line_dialog,
+        )
+        self._add_menu_item(
+            menu=self._mgr.canvasMenu,
+            text="Add Rectangle...",
+            tip="Create a rectangle by specifying min/max corners",
+            func=self._add_rectangle_dialog,
+        )
+        self._add_menu_item(
+            menu=self._mgr.canvasMenu,
+            text="Add Square...",
+            tip="Create a square by specifying lower-left corner and side "
+                "length",
+            func=self._add_square_dialog,
+        )
+        self._add_menu_item(
+            menu=self._mgr.canvasMenu,
+            text="Add Ellipse...",
+            tip="Create an ellipse by specifying center and radii",
+            func=self._add_ellipse_dialog,
+        )
+        self._add_menu_item(
+            menu=self._mgr.canvasMenu,
+            text="Add Circle...",
+            tip="Create a circle by specifying center and radius",
+            func=self._add_circle_dialog,
+        )
+        self._add_menu_item(
+            menu=self._mgr.canvasMenu,
+            text="Add Triangle...",
+            tip="Create a triangle by specifying three vertices",
+            func=self._add_triangle_dialog,
+        )
+
+        self._mgr.canvasMenu.addSeparator()
+
         self._add_menu_item(
             menu=self._mgr.canvasMenu,
             text="Sample: Create ICCAD-2013",
@@ -101,6 +153,37 @@ class Canvas(_gui_common.PilotFeature):
             text="Sample: Hyperbola",
             tip="Draw a sample hyperbola (both branches)",
             func=self._hyperbola,
+        )
+        self._add_menu_item(
+            menu=self._mgr.canvasMenu,
+            text="Sample: Line",
+            tip="Draw a sample line segment from (0, 0) to (3, 2)",
+            func=self._sample_line,
+        )
+        self._add_menu_item(
+            menu=self._mgr.canvasMenu,
+            text="Sample: Rectangle",
+            tip="Draw a sample rectangle with corners (0,0) and (4,2)",
+            func=self._sample_rectangle,
+        )
+        self._add_menu_item(
+            menu=self._mgr.canvasMenu,
+            text="Sample: Square",
+            tip="Draw a sample square at (0,0) with side length 3",
+            func=self._sample_square,
+        )
+        self._add_menu_item(
+            menu=self._mgr.canvasMenu,
+            text="Sample: Circle",
+            tip="Draw a sample circle centered at (2,2) with radius 1.5",
+            func=self._sample_circle,
+        )
+        self._add_menu_item(
+            menu=self._mgr.canvasMenu,
+            text="Sample: Triangle",
+            tip="Draw a sample triangle with vertices at "
+                "(0,0), (3,0), (1.5,2)",
+            func=self._sample_triangle,
         )
 
     @staticmethod
@@ -185,6 +268,157 @@ class Canvas(_gui_common.PilotFeature):
         left_sampler.draw_cbc()
 
         self._update_widget()
+
+    def _clear_canvas(self):
+        self._world = core.WorldFp64()
+        self._update_widget()
+
+    # --- interactive creation dialogs ---
+
+    def _add_line_dialog(self):
+        dlg = ShapeCreateDialog(
+            title="Add Line",
+            fields=[("x0", 0.0), ("y0", 0.0), ("x1", 3.0), ("y1", 2.0)],
+            parent=self._mainWindow,
+        )
+        if dlg.exec():
+            v = dlg.values()
+            self._world.add_line(v["x0"], v["y0"], v["x1"], v["y1"])
+            self._update_widget()
+
+    def _add_rectangle_dialog(self):
+        dlg = ShapeCreateDialog(
+            title="Add Rectangle",
+            fields=[
+                ("x_min", 0.0), ("y_min", 0.0),
+                ("x_max", 4.0), ("y_max", 2.0),
+            ],
+            parent=self._mainWindow,
+        )
+        if dlg.exec():
+            v = dlg.values()
+            self._world.add_rectangle(
+                v["x_min"], v["y_min"], v["x_max"], v["y_max"])
+            self._update_widget()
+
+    def _add_square_dialog(self):
+        dlg = ShapeCreateDialog(
+            title="Add Square",
+            fields=[("x_min", 0.0), ("y_min", 0.0), ("size", 3.0)],
+            parent=self._mainWindow,
+        )
+        if dlg.exec():
+            v = dlg.values()
+            self._world.add_square(v["x_min"], v["y_min"], v["size"])
+            self._update_widget()
+
+    def _add_ellipse_dialog(self):
+        dlg = ShapeCreateDialog(
+            title="Add Ellipse",
+            fields=[
+                ("cx", 0.0), ("cy", 0.0),
+                ("rx", 2.0), ("ry", 1.0),
+            ],
+            parent=self._mainWindow,
+        )
+        if dlg.exec():
+            v = dlg.values()
+            self._world.add_ellipse(v["cx"], v["cy"], v["rx"], v["ry"])
+            self._update_widget()
+
+    def _add_circle_dialog(self):
+        dlg = ShapeCreateDialog(
+            title="Add Circle",
+            fields=[("cx", 0.0), ("cy", 0.0), ("r", 1.5)],
+            parent=self._mainWindow,
+        )
+        if dlg.exec():
+            v = dlg.values()
+            self._world.add_circle(v["cx"], v["cy"], v["r"])
+            self._update_widget()
+
+    def _add_triangle_dialog(self):
+        dlg = ShapeCreateDialog(
+            title="Add Triangle",
+            fields=[
+                ("x0", 0.0), ("y0", 0.0),
+                ("x1", 3.0), ("y1", 0.0),
+                ("x2", 1.5), ("y2", 2.0),
+            ],
+            parent=self._mainWindow,
+        )
+        if dlg.exec():
+            v = dlg.values()
+            self._world.add_triangle(
+                v["x0"], v["y0"],
+                v["x1"], v["y1"],
+                v["x2"], v["y2"],
+            )
+            self._update_widget()
+
+    # --- sample presets for new shape APIs ---
+
+    def _sample_line(self):
+        self._world.add_line(0.0, 0.0, 3.0, 2.0)
+        self._update_widget()
+
+    def _sample_rectangle(self):
+        self._world.add_rectangle(0.0, 0.0, 4.0, 2.0)
+        self._update_widget()
+
+    def _sample_square(self):
+        self._world.add_square(0.0, 0.0, 3.0)
+        self._update_widget()
+
+    def _sample_circle(self):
+        self._world.add_circle(2.0, 2.0, 1.5)
+        self._update_widget()
+
+    def _sample_triangle(self):
+        self._world.add_triangle(0.0, 0.0, 3.0, 0.0, 1.5, 2.0)
+        self._update_widget()
+
+
+class ShapeCreateDialog(QtWidgets.QDialog):
+    """
+    Generic dialog for creating a 2D shape by specifying numeric parameters.
+
+    Each field is a (name, default_value) pair rendered as a QDoubleSpinBox.
+    Call values() after exec() returns True to get a dict of field values.
+    """
+
+    def __init__(self, title, fields, parent=None):
+        super().__init__(parent)
+        self.setWindowTitle(title)
+        self._spinboxes = {}
+        self._build_ui(fields)
+
+    def _build_ui(self, fields):
+        form = QtWidgets.QFormLayout()
+        for name, default in fields:
+            spin = QtWidgets.QDoubleSpinBox()
+            spin.setRange(-1e9, 1e9)
+            spin.setDecimals(4)
+            spin.setSingleStep(0.1)
+            spin.setValue(default)
+            self._spinboxes[name] = spin
+            form.addRow(name, spin)
+
+        buttons = QtWidgets.QDialogButtonBox(
+            QtWidgets.QDialogButtonBox.Ok |
+            QtWidgets.QDialogButtonBox.Cancel
+        )
+        buttons.accepted.connect(self.accept)
+        buttons.rejected.connect(self.reject)
+
+        layout = QtWidgets.QVBoxLayout()
+        layout.addLayout(form)
+        layout.addWidget(buttons)
+        self.setLayout(layout)
+
+    def values(self):
+        return {name: spin.value()
+                for name, spin in self._spinboxes.items()}
 
 
 class CurveSampler:
