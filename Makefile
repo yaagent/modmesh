@@ -163,7 +163,7 @@ BLACK ?= black
 # formatting output and cause CI disagreement with local runs.
 CLANG_FORMAT_CI_VERSION ?= 20
 # Mirror flake8's ignored paths so formatting and linting stay in sync.
-BLACK_OPTS ?= --extend-exclude 'thirdparty|tmp|_deps'
+BLACK_OPTS ?= --extend-exclude 'thirdparty|tmp|_deps|build'
 
 CFFILES = $(shell find cpp gtests -type f -name '*.[ch]pp' | sort)
 ifeq ($(FORCE_CLANG_FORMAT),inplace)
@@ -205,7 +205,7 @@ flake8:
 		echo "  Install: pip install flake8"; \
 		exit 1; \
 	}
-	$(FLAKE8) . --exclude thirdparty,tmp,_deps
+	$(FLAKE8) . --exclude thirdparty,tmp,_deps,build
 
 .PHONY: checkascii
 checkascii:

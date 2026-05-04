@@ -81,7 +81,7 @@ fi
 # ---------------------------------------------------------------------------
 
 echo "==> macdeployqt (Qt frameworks)"
-# macdeployqt may print errors about Python — that is expected and handled below.
+# macdeployqt may print errors about Python - that is expected and handled below.
 macdeployqt "$APP" -verbose=1 2>&1 || true
 
 # ---------------------------------------------------------------------------
