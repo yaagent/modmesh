@@ -33,6 +33,7 @@
 #include <modmesh/pilot/RPythonConsoleDockWidget.hpp>
 #include <modmesh/pilot/R3DWidget.hpp>
 #include <modmesh/pilot/RAction.hpp>
+#include <modmesh/pilot/RMenu.hpp>
 
 #include <QMainWindow>
 #include <QMdiArea>
@@ -67,13 +68,13 @@ public:
     template <typename... Args>
     QMdiSubWindow * addSubWindow(Args &&... args);
 
-    QMenu * fileMenu() { return m_fileMenu; }
-    QMenu * viewMenu() { return m_viewMenu; }
-    QMenu * oneMenu() { return m_oneMenu; }
-    QMenu * meshMenu() { return m_meshMenu; }
-    QMenu * canvasMenu() { return m_canvasMenu; }
-    QMenu * profilingMenu() { return m_profilingMenu; }
-    QMenu * windowMenu() { return m_windowMenu; }
+    RMenu * fileMenu() { return m_fileMenu; }
+    RMenu * viewMenu() { return m_viewMenu; }
+    RMenu * oneMenu() { return m_oneMenu; }
+    RMenu * meshMenu() { return m_meshMenu; }
+    RMenu * canvasMenu() { return m_canvasMenu; }
+    RMenu * profilingMenu() { return m_profilingMenu; }
+    RMenu * windowMenu() { return m_windowMenu; }
 
     void quit() { m_core->quit(); }
 
@@ -101,13 +102,13 @@ private:
 
     QMainWindow * m_mainWindow = nullptr;
 
-    QMenu * m_fileMenu = nullptr;
-    QMenu * m_viewMenu = nullptr;
-    QMenu * m_oneMenu = nullptr;
-    QMenu * m_meshMenu = nullptr;
-    QMenu * m_canvasMenu = nullptr;
-    QMenu * m_profilingMenu = nullptr;
-    QMenu * m_windowMenu = nullptr;
+    RMenu * m_fileMenu = nullptr;
+    RMenu * m_viewMenu = nullptr;
+    RMenu * m_oneMenu = nullptr;
+    RMenu * m_meshMenu = nullptr;
+    RMenu * m_canvasMenu = nullptr;
+    RMenu * m_profilingMenu = nullptr;
+    RMenu * m_windowMenu = nullptr;
 
     RPythonConsoleDockWidget * m_pycon = nullptr;
     QMdiArea * m_mdiArea = nullptr;

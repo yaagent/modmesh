@@ -39,7 +39,6 @@ from . import _pilot_core as _pcore
 from . import airfoil
 
 if _pcore.enable:
-    from PySide6.QtGui import QAction
     from . import _mesh
     from . import _euler1d
     from . import _burgers1d
@@ -111,19 +110,12 @@ class _Controller(metaclass=_Singleton):
         wm = self._rmgr
 
         def _addAction(menu, text, tip, func, checkable=False, checked=False):
-            act = QAction(text, wm.mainWindow)
-            act.setStatusTip(tip)
-            act.setCheckable(checkable)
-            if checkable:
-                act.setChecked(checked)
-            if callable(func):
-                act.triggered.connect(lambda *a: func())
-            elif func:
+            if not callable(func):
                 modname, funcname = func.rsplit('.', maxsplit=1)
                 mod = importlib.import_module(modname)
                 func = getattr(mod, funcname)
-                act.triggered.connect(lambda *a: func())
-            menu.addAction(act)
+            menu.add_action(text=text, tip=tip, func=func,
+                            checkable=checkable, checked=checked)
 
         self.gmsh_dialog.populate_menu()
         self.svg_dialog.populate_menu()
