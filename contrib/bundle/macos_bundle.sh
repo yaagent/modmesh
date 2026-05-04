@@ -70,14 +70,44 @@ else:
 
 PY_VER=$(python3 -c "import sys; print('%d.%d' % sys.version_info[:2])")
 PY_DYLIB="$PY_FW/Versions/$PY_VER/Python"
-PYSIDE_DIR=$(python3 -c "import PySide6, os; print(os.path.dirname(PySide6.__file__))")
-SHIBOKEN_DIR=$(python3 -c "import shiboken6, os; print(os.path.dirname(shiboken6.__file__))")
+
+# All site-packages directories the embedded interpreter would search,
+# expanded through .pth files (so packages installed via separate prefixes,
+# such as Homebrew's matplotlib keg, are found).  macOS still ships bash
+# 3.2, which has no mapfile; read into an array with a loop instead.
+SITE_DIRS=()
+while IFS= read -r line; do
+    SITE_DIRS+=("$line")
+done < <(python3 -c "
+import site, os
+seen, out = set(), []
+def add(p):
+    p = os.path.realpath(p)
+    if p in seen or not os.path.isdir(p):
+        return
+    seen.add(p); out.append(p)
+    for f in sorted(os.listdir(p)):
+        if not f.endswith('.pth'):
+            continue
+        try:
+            with open(os.path.join(p, f)) as fp:
+                for line in fp:
+                    line = line.strip()
+                    if line and not line.startswith(('#', 'import ')):
+                        add(line if os.path.isabs(line) else os.path.join(p, line))
+        except OSError:
+            pass
+for d in site.getsitepackages():
+    add(d)
+print('\n'.join(out))
+")
 
 echo "==> Build path : $BUILD_PATH"
 echo "==> App bundle : $APP"
 echo "==> Python fw  : $PY_FW"
-echo "==> PySide6    : $PYSIDE_DIR"
-echo "==> shiboken6  : $SHIBOKEN_DIR"
+for d in "${SITE_DIRS[@]}"; do
+    echo "==> site-pkgs  : $d"
+done
 
 if [[ ! -f "$PY_DYLIB" ]]; then
     echo "ERROR: Python dylib not found at $PY_DYLIB" >&2
@@ -126,48 +156,28 @@ rm -rf "$BUNDLED_SITE"
 mkdir -p "$BUNDLED_SITE"
 
 # ---------------------------------------------------------------------------
-# Step 4: copy PySide6 and shiboken6 into the bundled site-packages, then
-#         rewrite their Qt and @rpath references to point at the bundled
-#         dylibs so they share Qt + libpyside6/libshiboken6 with the pilot
-#         binary.
+# Step 4: copy every installed Python package the embedded interpreter
+#         would normally find into the bundled site-packages.  Without
+#         this, `import numpy` (and other modmesh dependencies) fails on
+#         a machine that does not have Homebrew's site-packages mounted
+#         at /opt/homebrew.
+#
+#         rsync -L dereferences symlinks because Homebrew exposes most
+#         files as symlinks into Cellar.  __pycache__ directories are
+#         skipped (they will be regenerated) and *.pth files are skipped
+#         because they encode absolute Homebrew paths -- the directories
+#         they point at are themselves enumerated above as SITE_DIRS and
+#         copied here, so their content is included even though the .pth
+#         link is not.
 # ---------------------------------------------------------------------------
 
-echo "==> Copying PySide6 and shiboken6 into bundled site-packages"
-# -L dereferences symlinks; Homebrew exposes PySide6 files as symlinks into
-# Cellar, and we need real files inside the bundle.
-cp -RL "$PYSIDE_DIR" "$BUNDLED_SITE/PySide6"
-cp -RL "$SHIBOKEN_DIR" "$BUNDLED_SITE/shiboken6"
-
-# Drop bytecode caches and source-only helpers we cannot rewrite.
-find "$BUNDLED_SITE/PySide6" "$BUNDLED_SITE/shiboken6" \
-    -type d -name '__pycache__' -exec rm -rf {} + 2>/dev/null || true
-
-# Rewrite a single binary's load commands: replace any /opt/homebrew Qt
-# framework path or @rpath/libpyside6/libshiboken6 with the bundled
-# @executable_path equivalent.
-rewrite_pyside_so()
-{
-    local bin="$1" old new fw
-    while IFS= read -r old; do
-        case "$old" in
-        /opt/homebrew/*/Qt*.framework/Versions/*/*)
-            fw=${old##*/}
-            new="@executable_path/../Frameworks/${fw}.framework/Versions/A/${fw}"
-            install_name_tool -change "$old" "$new" "$bin" 2>/dev/null || true
-            ;;
-        @rpath/libpyside6.abi3.*.dylib|@rpath/libshiboken6.abi3.*.dylib)
-            new="@executable_path/../Frameworks/${old#@rpath/}"
-            install_name_tool -change "$old" "$new" "$bin" 2>/dev/null || true
-            ;;
-        esac
-    done < <(otool -L "$bin" 2>/dev/null | awk 'NR>1 {print $1}')
-}
-
-echo "==> Rewriting PySide6/shiboken6 .so dependencies to bundled paths"
-while IFS= read -r -d '' SO; do
-    rewrite_pyside_so "$SO"
-done < <(find "$BUNDLED_SITE/PySide6" "$BUNDLED_SITE/shiboken6" \
-    \( -name '*.so' -o -name '*.dylib' \) -print0)
+echo "==> Copying Python packages into bundled site-packages"
+for SITE in "${SITE_DIRS[@]}"; do
+    rsync -aL \
+        --exclude '__pycache__' \
+        --exclude '*.pth' \
+        "$SITE/" "$BUNDLED_SITE/"
+done
 
 # ---------------------------------------------------------------------------
 # Step 5: copy the modmesh Python package into the bundled site-packages
@@ -199,28 +209,112 @@ echo "    modmesh -> $BUNDLED_SITE/modmesh"
 #          commands by install name.
 # ---------------------------------------------------------------------------
 
-echo "==> Redirecting remaining Homebrew references to bundled copies"
-declare bundled_index=""
+echo "==> Pulling in transitive Homebrew dependencies"
+# Collect every Mach-O in the bundle into a queue, then BFS-walk it.  For
+# each unprocessed binary we read its load commands once and any
+# /opt/homebrew dependency that is not yet bundled gets copied into
+# Contents/Frameworks/ and pushed onto the queue.  Processing only the
+# newly-added files (instead of re-walking the entire bundle every pass)
+# keeps the cost roughly linear in the number of bundled binaries.
+
+CLOSURE_TMP=$(mktemp -d)
+QUEUE="$CLOSURE_TMP/queue"
+SEEN_BIN="$CLOSURE_TMP/seen_bin"
+SEEN_DYLIB="$CLOSURE_TMP/seen_dylib"
+SEEN_FW="$CLOSURE_TMP/seen_fw"
+: > "$QUEUE" "$SEEN_BIN" "$SEEN_DYLIB" "$SEEN_FW"
+
+# Index the dylibs and frameworks already present in Contents/Frameworks/
+# so we don't try to re-copy them.
 for f in "$FW_DIR"/*.dylib; do
-    [[ -f "$f" ]] || continue
-    bundled_index="$bundled_index $(basename "$f")"
+    [[ -f "$f" ]] && echo "$(basename "$f")" >> "$SEEN_DYLIB"
+done
+for f in "$FW_DIR"/*.framework; do
+    [[ -d "$f" ]] && echo "$(basename "$f" .framework)" >> "$SEEN_FW"
 done
 
-is_bundled_dylib()
-{
-    local needle=" $1 "
-    case "$bundled_index " in
-        *"$needle"*) return 0 ;;
-        *) return 1 ;;
-    esac
-}
+# Seed the queue with every Mach-O already in the bundle.
+find "$APP" \( -name '*.dylib' -o -name '*.so' -o -path '*/MacOS/*' \) \
+    -type f -print >> "$QUEUE"
+
+while [[ -s "$QUEUE" ]]; do
+    BIN=$(head -n 1 "$QUEUE")
+    sed -i '' '1d' "$QUEUE"
+    grep -qxF "$BIN" "$SEEN_BIN" && continue
+    echo "$BIN" >> "$SEEN_BIN"
+    while IFS= read -r OLD; do
+        case "$OLD" in
+        /opt/homebrew/*.framework/Versions/*/*)
+            fw=${OLD##*/}
+            grep -qxF "$fw" "$SEEN_FW" && continue
+            SRC=${OLD%%/Versions/*}
+            [[ -d "$SRC" ]] || continue
+            # rsync preserves internal symlinks (Headers -> Versions/Current/...)
+            # but --copy-unsafe-links materialises the symlinks that point into
+            # Homebrew's Cellar (the binary itself), giving us a self-contained
+            # framework with its on-disk shape intact.
+            mkdir -p "$FW_DIR/$fw.framework"
+            if rsync -a --copy-unsafe-links "$SRC/" "$FW_DIR/$fw.framework/" 2>/dev/null; then
+                chmod -R u+w "$FW_DIR/$fw.framework"
+                echo "$fw" >> "$SEEN_FW"
+                find "$FW_DIR/$fw.framework" -type f \
+                    \( -name '*.dylib' -o -perm +111 \) >> "$QUEUE"
+            fi
+            ;;
+        /opt/homebrew/*)
+            base=${OLD##*/}
+            grep -qxF "$base" "$SEEN_DYLIB" && continue
+            [[ -f "$OLD" ]] || continue
+            if cp -L "$OLD" "$FW_DIR/$base" 2>/dev/null; then
+                chmod u+w "$FW_DIR/$base"
+                echo "$base" >> "$SEEN_DYLIB"
+                echo "$FW_DIR/$base" >> "$QUEUE"
+            fi
+            ;;
+        esac
+    done < <(otool -L "$BIN" 2>/dev/null | awk 'NR>1 {print $1}')
+done
+
+echo "    bundled $(wc -l < "$SEEN_DYLIB" | tr -d ' ') dylibs and \
+$(wc -l < "$SEEN_FW" | tr -d ' ') frameworks"
+rm -rf "$CLOSURE_TMP"
+
+echo "==> Redirecting Homebrew load commands to bundled copies"
+# Build the final dylib + framework basename indexes after the closure,
+# then rewrite every reference whose target is now bundled.  Also
+# rewrite @rpath/libfoo references for any libfoo bundled alongside.
+INDEX=" "
+for f in "$FW_DIR"/*.dylib; do
+    [[ -f "$f" ]] && INDEX="${INDEX}$(basename "$f") "
+done
+qt_index=" "
+for fw in "$FW_DIR"/*.framework; do
+    [[ -d "$fw" ]] || continue
+    name=$(basename "$fw" .framework)
+    [[ "$name" == Python ]] && continue
+    qt_index="${qt_index}${name} "
+done
 
 while IFS= read -r -d '' BIN; do
     while IFS= read -r OLD; do
         case "$OLD" in
+        /opt/homebrew/*.framework/Versions/*/*)
+            fw=${OLD##*/}
+            if [[ "$qt_index" == *" $fw "* ]]; then
+                NEW="@executable_path/../Frameworks/${fw}.framework/Versions/A/${fw}"
+                install_name_tool -change "$OLD" "$NEW" "$BIN" 2>/dev/null || true
+            fi
+            ;;
         /opt/homebrew/*)
             base=${OLD##*/}
-            if is_bundled_dylib "$base"; then
+            if [[ "$INDEX" == *" $base "* ]]; then
+                NEW="@executable_path/../Frameworks/$base"
+                install_name_tool -change "$OLD" "$NEW" "$BIN" 2>/dev/null || true
+            fi
+            ;;
+        @rpath/lib*.dylib)
+            base=${OLD#@rpath/}
+            if [[ "$INDEX" == *" $base "* ]]; then
                 NEW="@executable_path/../Frameworks/$base"
                 install_name_tool -change "$OLD" "$NEW" "$BIN" 2>/dev/null || true
             fi
@@ -261,18 +355,28 @@ done
 # ---------------------------------------------------------------------------
 
 echo "==> Ad-hoc re-signing all bundled Mach-O files"
-# Sign every dylib/.so first; their containing bundles (frameworks) are sealed
-# afterwards.  Use a leaf-first ordering by sorting by depth descending.
+# Sign every dylib/.so first; their containing bundles (frameworks,
+# nested .app helpers like QtWebEngineProcess) are sealed afterwards.
 while IFS= read -r -d '' BIN; do
     codesign --force --sign - "$BIN" 2>/dev/null || true
 done < <(find "$APP/Contents" \( -name '*.dylib' -o -name '*.so' \) -print0)
+
+# Sign nested .app bundles inside frameworks (QtWebEngineCore ships
+# Helpers/QtWebEngineProcess.app, etc.) before sealing their parent
+# framework.  Reverse-sort by path length so the deepest .app signs first.
+find "$APP" -name '*.app' -type d -print | awk '{print length($0), $0}' | \
+    sort -k1,1nr | cut -d' ' -f2- | while IFS= read -r INNER_APP; do
+    [[ "$INNER_APP" == "$APP" ]] && continue
+    rm -rf "$INNER_APP/Contents/_CodeSignature"
+    codesign --force --sign - "$INNER_APP" 2>/dev/null || true
+done
 
 # Re-seal each nested framework (Python.framework, Qt*.framework, ...).
 # The framework version directory carries the signature on macOS.
 for FW in "$FW_DIR"/*.framework; do
     [[ -d "$FW" ]] || continue
     for VER in "$FW"/Versions/*; do
-        [[ -d "$VER" ]] || continue
+        [[ -d "$VER" && ! -L "$VER" ]] || continue
         rm -rf "$VER/_CodeSignature"
         codesign --force --sign - "$VER" 2>/dev/null || true
     done
