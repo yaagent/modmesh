@@ -6,13 +6,23 @@ on:
   schedule:
     - cron: '34 17 * * *'
 
+concurrency:
+  group: ${{ github.workflow }}-${{ github.event.pull_request.number || github.ref }}
+  cancel-in-progress: true
+
 jobs:
 
   lint:
 
     name: Run make lint and pilot on ${{ matrix.os }}
 
-    if: ${{ github.event_name != 'schedule' || (github.event_name == 'schedule' && vars.MMGH_NIGHTLY == 'enable') }}
+    if: |
+      github.event_name == 'pull_request' ||
+      (github.event_name == 'push' &&
+      vars.MMGH_PUSH_RUN_BRANCH != '' &&
+      contains(vars.MMGH_PUSH_RUN_BRANCH, github.ref_name)) ||
+      (github.event_name == 'schedule' &&
+      vars.MMGH_NIGHTLY == 'enable')
 
     runs-on: ${{ matrix.os }}
 

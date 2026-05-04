@@ -6,11 +6,21 @@ on:
   schedule:
     - cron: '34 17 * * *'
 
+concurrency:
+  group: ${{ github.workflow }}-${{ github.event.pull_request.number || github.ref }}
+  cancel-in-progress: true
+
 jobs:
 
   nouse_install:
 
-    if: ${{ github.event_name != 'schedule' || (github.event_name == 'schedule' && vars.MMGH_NIGHTLY == 'enable') }}
+    if: |
+      github.event_name == 'pull_request' ||
+      (github.event_name == 'push' &&
+      vars.MMGH_PUSH_RUN_BRANCH != '' &&
+      contains(vars.MMGH_PUSH_RUN_BRANCH, github.ref_name)) ||
+      (github.event_name == 'schedule' &&
+      vars.MMGH_NIGHTLY == 'enable')
 
     name: nouse_install_${{ matrix.os }}_Release
 
