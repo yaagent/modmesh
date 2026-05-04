@@ -68,7 +68,7 @@ RManager & RManager::setUp()
     {
         this->setUpConsole();
         this->setUpCentral();
-        this->setUpMenuBar();
+        this->setUpMenu();
 
         m_already_setup = true;
     }
@@ -166,7 +166,7 @@ void RManager::setUpCentral()
     m_mainWindow->setCentralWidget(m_mdiArea);
 }
 
-void RManager::setUpMenuBar()
+void RManager::setUpMenu()
 {
     m_menuBar = new QMenuBar(nullptr);
     m_mainWindow->setMenuBar(m_menuBar);

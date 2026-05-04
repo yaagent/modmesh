@@ -107,7 +107,7 @@ private:
 
     void setUpConsole();
     void setUpCentral();
-    void setUpMenuBar();
+    void setUpMenu();
 
     void setUpCameraControllersMenuItems(RMenu * view_menu) const;
     void setUpCameraMovementMenuItems(RMenu * view_menu) const;
