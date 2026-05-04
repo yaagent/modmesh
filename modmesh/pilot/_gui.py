@@ -91,6 +91,7 @@ class _Controller(metaclass=_Singleton):
         self._rmgr.setUp()
         self._rmgr.windowTitle = name
         self._rmgr.resize(w=size[0], h=size[1])
+        self._create_menus()
         self.gmsh_dialog = _mesh.GmshFileDialog(mgr=self._rmgr)
         self.svg_dialog = _svg_gui.SVGFileDialog(mgr=self._rmgr)
         self.sample_mesh = _mesh.SampleMesh(mgr=self._rmgr)
@@ -105,6 +106,19 @@ class _Controller(metaclass=_Singleton):
         self.populate_menu()
         self._rmgr.show()
         return self._rmgr.exec()
+
+    def _create_menus(self):
+        wm = self._rmgr
+        # NOTE: All menus must be created before the window is shown or
+        # Windows may crash with "exited with code -1073740791".
+        wm.addMenu("File")
+        wm.addMenu("View")
+        wm.addViewMenuCameraItems()
+        wm.addMenu("One")
+        wm.addMenu("Mesh")
+        wm.addMenu("Canvas")
+        wm.addMenu("Profiling")
+        wm.addMenu("Window")
 
     def populate_menu(self):
         wm = self._rmgr

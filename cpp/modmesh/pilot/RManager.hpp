@@ -38,8 +38,12 @@
 #include <QMainWindow>
 #include <QMdiArea>
 #include <QMdiSubWindow>
+#include <QMenuBar>
 #include <QApplication>
 #include <Qt>
+
+#include <string>
+#include <unordered_map>
 
 namespace modmesh
 {
@@ -68,13 +72,27 @@ public:
     template <typename... Args>
     QMdiSubWindow * addSubWindow(Args &&... args);
 
-    RMenu * fileMenu() { return m_fileMenu; }
-    RMenu * viewMenu() { return m_viewMenu; }
-    RMenu * oneMenu() { return m_oneMenu; }
-    RMenu * meshMenu() { return m_meshMenu; }
-    RMenu * canvasMenu() { return m_canvasMenu; }
-    RMenu * profilingMenu() { return m_profilingMenu; }
-    RMenu * windowMenu() { return m_windowMenu; }
+    /**
+     * Create a new RMenu with the given title, append it to the menu bar,
+     * and register it so that the named accessors below can find it.
+     * Returns nullptr if setUp() has not been called yet.
+     */
+    RMenu * addMenu(std::string const & title);
+
+    /**
+     * Add the camera-controller and camera-movement items to the menu
+     * returned by viewMenu().  Must be called after addMenu("View").
+     */
+    void addViewMenuCameraItems();
+
+    // Named accessors: look up the menu registered under the matching title.
+    RMenu * fileMenu() { return findMenu("File"); }
+    RMenu * viewMenu() { return findMenu("View"); }
+    RMenu * oneMenu() { return findMenu("One"); }
+    RMenu * meshMenu() { return findMenu("Mesh"); }
+    RMenu * canvasMenu() { return findMenu("Canvas"); }
+    RMenu * profilingMenu() { return findMenu("Profiling"); }
+    RMenu * windowMenu() { return findMenu("Window"); }
 
     void quit() { m_core->quit(); }
 
@@ -89,26 +107,24 @@ private:
 
     void setUpConsole();
     void setUpCentral();
-    void setUpMenu();
+    void setUpMenuBar();
 
-    void setUpCameraControllersMenuItems() const;
-    void setUpCameraMovementMenuItems() const;
+    void setUpCameraControllersMenuItems(RMenu * view_menu) const;
+    void setUpCameraMovementMenuItems(RMenu * view_menu) const;
 
-    std::function<void()> createCameraMovementItemHandler(const std::function<void(CameraInputState &)> &) const;
+    std::function<void()> createCameraMovementItemHandler(
+        const std::function<void(CameraInputState &)> &) const;
+
+    RMenu * findMenu(std::string const & title) const;
 
     bool m_already_setup = false;
 
     std::unique_ptr<QCoreApplication> m_core = nullptr;
 
     QMainWindow * m_mainWindow = nullptr;
+    QMenuBar * m_menuBar = nullptr;
 
-    RMenu * m_fileMenu = nullptr;
-    RMenu * m_viewMenu = nullptr;
-    RMenu * m_oneMenu = nullptr;
-    RMenu * m_meshMenu = nullptr;
-    RMenu * m_canvasMenu = nullptr;
-    RMenu * m_profilingMenu = nullptr;
-    RMenu * m_windowMenu = nullptr;
+    std::unordered_map<std::string, RMenu *> m_menus;
 
     RPythonConsoleDockWidget * m_pycon = nullptr;
     QMdiArea * m_mdiArea = nullptr;
