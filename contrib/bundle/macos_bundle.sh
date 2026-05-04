@@ -192,6 +192,18 @@ mkdir -p "$BUNDLED_SITE"
 echo "$HB_SITE" > "$BUNDLED_SITE/homebrew-site.pth"
 echo "    Added site-packages pth: $HB_SITE"
 
+# Copy the modmesh Python package into the bundled site-packages so the
+# embedded interpreter can `import modmesh.system` regardless of the
+# current working directory.  Skip __pycache__ and the _modmesh extension
+# .so (the C++ side of modmesh is statically embedded in the pilot binary
+# via PYBIND11_EMBEDDED_MODULE).
+echo "==> Copying modmesh package into bundled site-packages"
+rsync -a \
+    --exclude '__pycache__' \
+    --exclude '_modmesh*.so' \
+    "$REPO_ROOT/modmesh" "$BUNDLED_SITE/"
+echo "    modmesh -> $BUNDLED_SITE/modmesh"
+
 # ---------------------------------------------------------------------------
 # Step 4: re-sign
 # ---------------------------------------------------------------------------
