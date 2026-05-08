@@ -25,6 +25,8 @@ jobs:
 
     runs-on: ${{ matrix.os }}
 
+    timeout-minutes: ${{ fromJSON(vars.MMGH_TIMEOUT_LINT || '30') }}
+
     env:
       JOB_MAKE_ARGS: VERBOSE=1 BUILD_QT=ON USE_CLANG_TIDY=ON LINT_AS_ERRORS=ON
       QT_DEBUG_PLUGINS: 1

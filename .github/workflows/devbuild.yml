@@ -25,6 +25,8 @@ jobs:
 
     runs-on: ${{ matrix.os }}
 
+    timeout-minutes: ${{ fromJSON(vars.MMGH_TIMEOUT_STANDALONE_BUFFER || '10') }}
+
     strategy:
       matrix:
         os: [ubuntu-24.04]
@@ -72,6 +74,8 @@ jobs:
     name: build_${{ matrix.os }}_${{ matrix.cmake_build_type }}
 
     runs-on: ${{ matrix.os }}
+
+    timeout-minutes: ${{ fromJSON(vars.MMGH_TIMEOUT_BUILD || '30') }}
 
     env:
       QT_DEBUG_PLUGINS: 1
@@ -211,6 +215,8 @@ jobs:
     name: build_${{ matrix.os }}_${{ matrix.cmake_build_type }}
 
     runs-on: ${{ matrix.os }}
+
+    timeout-minutes: ${{ fromJSON(vars.MMGH_TIMEOUT_BUILD || '30') }}
 
     env:
       QT_DEBUG_PLUGINS: 1

@@ -17,6 +17,8 @@ jobs:
 
     runs-on: ${{ matrix.os }}
 
+    timeout-minutes: ${{ fromJSON(vars.MMGH_TIMEOUT_PROFILE || '20') }}
+
     env:
       QT_DEBUG_PLUGINS: 1
       QT_QPA_PLATFORM: offscreen # for Ubuntu runner

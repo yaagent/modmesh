@@ -25,6 +25,8 @@ jobs:
 
     runs-on: ${{ matrix.os }}
 
+    timeout-minutes: ${{ fromJSON(vars.MMGH_TIMEOUT_NOUSE_INSTALL || '15') }}
+
     env:
       JOB_CMAKE_ARGS: -DBUILD_QT=OFF -DUSE_CLANG_TIDY=OFF -DCMAKE_BUILD_TYPE=Release
 
