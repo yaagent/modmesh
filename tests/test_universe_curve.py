@@ -28,26 +28,28 @@
 import unittest
 
 import modmesh as mm
-import pytest
 
-pytest.importorskip("PySide6")
+from modmesh.plot import curve
 
-from modmesh.pilot import _canvas  # noqa: E402
+
+"""
+Test curve helpers that populate universe World geometry.
+"""
 
 
 class EllipseTC(unittest.TestCase):
     def test_default(self):
-        ell = _canvas.Ellipse()
+        ell = curve.Ellipse()
         self.assertEqual(ell.a, 2.0)
         self.assertEqual(ell.b, 1.0)
 
     def test_custom(self):
-        ell = _canvas.Ellipse(a=3.0, b=2.0)
+        ell = curve.Ellipse(a=3.0, b=2.0)
         self.assertEqual(ell.a, 3.0)
         self.assertEqual(ell.b, 2.0)
 
     def test_calc_points(self):
-        ell = _canvas.Ellipse(a=2.0, b=1.0)
+        ell = curve.Ellipse(a=2.0, b=1.0)
         points = ell.calc_points(10)
         self.assertEqual(points.ndim, 2)
         self.assertEqual(len(points), 11)
@@ -56,25 +58,25 @@ class EllipseTC(unittest.TestCase):
 class CurveSamplerTC(unittest.TestCase):
     def test_construction(self):
         w = mm.WorldFp64()
-        _canvas.CurveSampler(w, _canvas.Ellipse(a=2.0, b=1.0))
+        curve.CurveSampler(w, curve.Ellipse(a=2.0, b=1.0))
 
     def test_draw_ellipse(self):
         w = mm.WorldFp64()
-        sampler = _canvas.CurveSampler(w, _canvas.Ellipse(a=2.0, b=1.0))
+        sampler = curve.CurveSampler(w, curve.Ellipse(a=2.0, b=1.0))
         sampler.populate_points(npoint=20)
         sampler.draw_cbc()
         self.assertEqual(w.nbezier, 20)
 
     def test_draw_parabola(self):
         w = mm.WorldFp64()
-        sampler = _canvas.CurveSampler(w, _canvas.Parabola(a=0.5))
+        sampler = curve.CurveSampler(w, curve.Parabola(a=0.5))
         sampler.populate_points(npoint=20)
         sampler.draw_cbc()
         self.assertEqual(w.nbezier, 20)
 
     def test_draw_hyperbola(self):
         w = mm.WorldFp64()
-        sampler = _canvas.CurveSampler(w, _canvas.Hyperbola(a=1.0, b=1.0))
+        sampler = curve.CurveSampler(w, curve.Hyperbola(a=1.0, b=1.0))
         sampler.populate_points(npoint=20)
         sampler.draw_cbc()
         self.assertEqual(w.nbezier, 20)
@@ -82,54 +84,54 @@ class CurveSamplerTC(unittest.TestCase):
 
 class ParabolaTC(unittest.TestCase):
     def test_default(self):
-        par = _canvas.Parabola()
+        par = curve.Parabola()
         self.assertEqual(par.a, 0.5)
         self.assertEqual(par.t_min, -3.0)
         self.assertEqual(par.t_max, 3.0)
 
     def test_custom(self):
-        par = _canvas.Parabola(a=1.0, t_min=-2.0, t_max=2.0)
+        par = curve.Parabola(a=1.0, t_min=-2.0, t_max=2.0)
         self.assertEqual(par.a, 1.0)
         self.assertEqual(par.t_min, -2.0)
         self.assertEqual(par.t_max, 2.0)
 
     def test_calc_points(self):
-        par = _canvas.Parabola(a=0.5, t_min=-3.0, t_max=3.0)
+        par = curve.Parabola(a=0.5, t_min=-3.0, t_max=3.0)
         points = par.calc_points(20)
         self.assertEqual(len(points), 21)
 
 
 class HyperbolaTC(unittest.TestCase):
     def test_default(self):
-        hyp = _canvas.Hyperbola()
+        hyp = curve.Hyperbola()
         self.assertEqual(hyp.a, 1.0)
         self.assertEqual(hyp.b, 1.0)
         self.assertEqual(hyp.t_min, -2.0)
         self.assertEqual(hyp.t_max, 2.0)
 
     def test_custom(self):
-        hyp = _canvas.Hyperbola(a=2.0, b=1.5, t_min=-3.0, t_max=3.0)
+        hyp = curve.Hyperbola(a=2.0, b=1.5, t_min=-3.0, t_max=3.0)
         self.assertEqual(hyp.a, 2.0)
         self.assertEqual(hyp.b, 1.5)
         self.assertEqual(hyp.t_min, -3.0)
         self.assertEqual(hyp.t_max, 3.0)
 
     def test_calc_points(self):
-        hyp = _canvas.Hyperbola(a=1.0, b=1.0)
+        hyp = curve.Hyperbola(a=1.0, b=1.0)
         points = hyp.calc_points(50)
         self.assertEqual(len(points), 51)
 
 
 class BezierSampleTC(unittest.TestCase):
     def test_s_curve(self):
-        bs = _canvas.BezierSample.s_curve()
+        bs = curve.BezierSample.s_curve()
         self.assertEqual(bs.p0, (0.0, 0.0))
         self.assertEqual(bs.p1, (1.0, 3.0))
         self.assertEqual(bs.p2, (4.0, -1.0))
         self.assertEqual(bs.p3, (5.0, 2.0))
 
     def test_arch(self):
-        bs = _canvas.BezierSample.arch()
+        bs = curve.BezierSample.arch()
         # The arch preset is defined to start at the origin and end at
         # x=5, y=0 so that the curve spans a fixed 5-unit horizontal range
         self.assertEqual(bs.p0, (0.0, 0.0))
@@ -138,7 +140,7 @@ class BezierSampleTC(unittest.TestCase):
         self.assertEqual(bs.p3, (5.0, 0.0))
 
     def test_loop(self):
-        bs = _canvas.BezierSample.loop()
+        bs = curve.BezierSample.loop()
         # The loop preset shares the same endpoints as arch so that both
         # presets can be compared under identical boundary conditions;
         # the difference lies in the control points that create the loop shape
@@ -151,13 +153,13 @@ class BezierSampleTC(unittest.TestCase):
 class BezierSamplerTC(unittest.TestCase):
     def test_construction(self):
         w = mm.WorldFp64()
-        bs = _canvas.BezierSample.arch()
-        _canvas.BezierSampler(w, bs)
+        bs = curve.BezierSample.arch()
+        curve.BezierSampler(w, bs)
 
     def test_draw(self):
         w = mm.WorldFp64()
-        bs = _canvas.BezierSample.arch()
-        sampler = _canvas.BezierSampler(w, bs)
+        bs = curve.BezierSample.arch()
+        sampler = curve.BezierSampler(w, bs)
         # nsample=10 is small enough to keep the test fast but large enough
         # to exercise the loop body in draw() more than once, catching
         # off-by-one errors in the sampling range
@@ -171,8 +173,8 @@ class BezierSamplerTC(unittest.TestCase):
 
     def test_draw_no_control_polygon(self):
         w = mm.WorldFp64()
-        bs = _canvas.BezierSample.arch()
-        sampler = _canvas.BezierSampler(w, bs)
+        bs = curve.BezierSample.arch()
+        sampler = curve.BezierSampler(w, bs)
         sampler.draw(nsample=10, show_control_polygon=False)
         self.assertEqual(w.nbezier, 1)
         # Without control polygon: only 2 cross-mark segments per control
@@ -181,8 +183,8 @@ class BezierSamplerTC(unittest.TestCase):
 
     def test_draw_no_control_points(self):
         w = mm.WorldFp64()
-        bs = _canvas.BezierSample.arch()
-        sampler = _canvas.BezierSampler(w, bs)
+        bs = curve.BezierSample.arch()
+        sampler = curve.BezierSampler(w, bs)
         sampler.draw(nsample=10, show_control_points=False)
         self.assertEqual(w.nbezier, 1)
         # Without control point marks: only 3 polygon edge segments
@@ -190,8 +192,8 @@ class BezierSamplerTC(unittest.TestCase):
 
     def test_draw_curve_only(self):
         w = mm.WorldFp64()
-        bs = _canvas.BezierSample.arch()
-        sampler = _canvas.BezierSampler(w, bs)
+        bs = curve.BezierSample.arch()
+        sampler = curve.BezierSampler(w, bs)
         sampler.draw(nsample=10, show_control_polygon=False,
                      show_control_points=False)
         self.assertEqual(w.nbezier, 1)

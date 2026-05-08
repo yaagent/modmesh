@@ -29,9 +29,10 @@
 No-GUI drawing sub-system (without GUI libraries) of modmesh.
 """
 
-from . import svg, plane_layer
+from . import curve, svg, plane_layer
 
 __all__ = [
+    'curve',
     'svg',
     'plane_layer'
 ]

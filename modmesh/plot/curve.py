@@ -25,17 +25,14 @@
 # POSSIBILITY OF SUCH DAMAGE.
 
 """
-Canvas utilities and curve/conic drawing utilities for pilot GUI.
+Curve sampling helpers without GUI dependencies.
 """
 
 import numpy as np
 
-from .. import core, plot
-
-from . import _gui_common
+from .. import core
 
 __all__ = [
-    'Canvas',
     'CurveSampler',
     'Ellipse',
     'Parabola',
@@ -43,148 +40,6 @@ __all__ = [
     'BezierSample',
     'BezierSampler',
 ]
-
-
-class Canvas(_gui_common.PilotFeature):
-    """
-    Canvas feature providing menu items for drawing curves and polygons.
-    """
-
-    def __init__(self, *args, **kw):
-        super(Canvas, self).__init__(*args, **kw)
-        self._world = core.WorldFp64()
-        self._widget = None
-
-    def populate_menu(self):
-        self._add_menu_item(
-            menu=self._mgr.canvasMenu,
-            text="Sample: Create ICCAD-2013",
-            tip="Create ICCAD-2013 polygon examples",
-            func=self.mesh_iccad_2013,
-        )
-
-        tip = "Draw a sample S-shaped cubic Bezier curve with control points"
-        self._add_menu_item(
-            menu=self._mgr.canvasMenu,
-            text="Sample: Bezier S-curve",
-            tip=tip,
-            func=self._bezier_s_curve,
-        )
-        self._add_menu_item(
-            menu=self._mgr.canvasMenu,
-            text="Sample: Bezier Arch",
-            tip="Draw a sample arch-shaped cubic Bezier curve with control "
-                "points",
-            func=self._bezier_arch,
-        )
-        self._add_menu_item(
-            menu=self._mgr.canvasMenu,
-            text="Sample: Bezier Loop",
-            tip="Draw a sample loop-like cubic Bezier curve with control "
-                "points",
-            func=self._bezier_loop,
-        )
-        self._add_menu_item(
-            menu=self._mgr.canvasMenu,
-            text="Sample: Ellipse",
-            tip="Draw a sample ellipse (a=2, b=1)",
-            func=self._ellipse,
-        )
-        self._add_menu_item(
-            menu=self._mgr.canvasMenu,
-            text="Sample: Parabola",
-            tip="Draw a sample parabola (y = 0.5*x^2)",
-            func=self._parabola,
-        )
-        self._add_menu_item(
-            menu=self._mgr.canvasMenu,
-            text="Sample: Hyperbola",
-            tip="Draw a sample hyperbola (both branches)",
-            func=self._hyperbola,
-        )
-
-    @staticmethod
-    def _draw_layer(world, layer):
-        point_type = core.Point3dFp64
-
-        for polygon in layer.get_polys():
-            segment_pad = core.SegmentPadFp64(ndim=2)
-
-            for coord in polygon:
-                segment_pad.append(core.Segment3dFp64(
-                    point_type(coord[0][0], coord[0][1]),
-                    point_type(coord[1][0], coord[1][1])
-                ))
-
-            world.add_segments(pad=segment_pad)
-
-    def mesh_iccad_2013(self):
-        layer = plot.plane_layer.PlaneLayer()
-        layer.add_figure("RECT N M1 70 800 180 40")
-        layer.add_figure(
-            "PGON N M1 70 720 410 720 410 920 70 920 "
-            "70 880 370 880 370 760 70 760"
-        )
-        layer.add_figure("RECT N M1 70 1060 180 40")
-        layer.add_figure(
-            "PGON N M1 70 980 410 980 410 1180 70 1180 "
-            "70 1140 370 1140 370 1020 70 1020"
-        )
-
-        self._draw_layer(self._world, layer)
-        self._update_widget()
-
-    def _update_widget(self):
-        if self._widget is None:
-            self._widget = self._mgr.add3DWidget()
-        self._widget.updateWorld(self._world)
-        self._widget.showMark()
-
-    def _bezier_s_curve(self):
-        bezier_sample = BezierSample.s_curve()
-        sampler = BezierSampler(self._world, bezier_sample)
-        sampler.draw(nsample=50, fac=1.0, off_x=0.0, off_y=0.0)
-        self._update_widget()
-
-    def _bezier_arch(self):
-        bezier_sample = BezierSample.arch()
-        sampler = BezierSampler(self._world, bezier_sample)
-        sampler.draw(nsample=50, fac=1.0, off_x=0.0, off_y=0.0)
-        self._update_widget()
-
-    def _bezier_loop(self):
-        bezier_sample = BezierSample.loop()
-        sampler = BezierSampler(self._world, bezier_sample)
-        sampler.draw(nsample=50, fac=1.0, off_x=0.0, off_y=0.0)
-        self._update_widget()
-
-    def _ellipse(self):
-        ellipse = Ellipse(a=2.0, b=1.0)
-        sampler = CurveSampler(self._world, ellipse)
-        sampler.populate_points(npoint=100)
-        sampler.draw_cbc()
-        self._update_widget()
-
-    def _parabola(self):
-        parabola = Parabola(a=0.5, t_min=-3.0, t_max=6.0)
-        sampler = CurveSampler(self._world, parabola)
-        sampler.populate_points(npoint=100)
-        sampler.draw_cbc()
-        self._update_widget()
-
-    def _hyperbola(self):
-        hyperbola = Hyperbola(a=1.0, b=1.0, t_min=-2.0, t_max=2.0)
-
-        right_sampler = CurveSampler(self._world, hyperbola)
-        right_sampler.populate_points(npoint=100)
-        right_sampler.draw_cbc()
-
-        left_sampler = CurveSampler(self._world, hyperbola)
-        left_sampler.populate_points(npoint=100)
-        left_sampler.points.x.ndarray[:] *= -1.0
-        left_sampler.draw_cbc()
-
-        self._update_widget()
 
 
 class CurveSampler:
