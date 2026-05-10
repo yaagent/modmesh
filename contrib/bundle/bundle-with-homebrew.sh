@@ -5,7 +5,10 @@
 # macdeployqt, otool, and install_name_tool to process the binaires, and ad-hoc
 # codesign to reseal them.
 #
-# The script assumes the dependencies are from homebrew.
+# !! WARNING !!
+# The script is only tested in a standalone VM environment, and assumes the
+# dependencies are from homebrew. Be very careful when running it in a
+# development or production machine.
 #
 # Usage:
 #   ./contrib/bundle/bundle-with-homebrew.sh [--skip-build] [--skip-check]
@@ -31,10 +34,9 @@ bundle_pyver() {
 }
 
 # Print every Mach-O under $1, NUL-delimited: standalone dylibs, .so
-# extensions, MacOS/ binaries, and the main binary of every nested
-# framework.  Framework binaries cannot be matched by file mode --
-# Homebrew ships them as 0644 -- so synthesise the canonical path
-# (Versions/<v>/<name>) explicitly.
+# extensions, MacOS/ binaries, and the main binary of every nested framework.
+# Framework binaries cannot be matched by file mode -- Homebrew ships them as
+# 0644 -- so synthesise the canonical path (Versions/<v>/<name>) explicitly.
 list_macho() {
     find "$1" -name '*.framework' -type d -print0 | \
         while IFS= read -r -d '' fw; do
@@ -49,9 +51,9 @@ list_macho() {
     find "$1" -type f \( -name '*.dylib' -o -name '*.so' -o -path '*/MacOS/*' \) -print0
 }
 
-# Print every LC_RPATH entry of the Mach-O at $1, one per line.
-# `otool -L` does not list these, so we parse `otool -l`.
-# The entry `otool -l` output looks like:
+# Print every LC_RPATH entry of the Mach-O at $1, one per line.  `otool -L`
+# does not list these, so we parse `otool -l`.  The entry `otool -l` output
+# looks like:
 # ```
 # Load command 33
 #           cmd LC_RPATH
