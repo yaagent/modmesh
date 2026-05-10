@@ -68,7 +68,10 @@ def _parse_command_line(argv):
                         default='pilot',
                         choices=['pilot', 'python', 'pytest'],
                         help='mode selection (default = %(default)s)')
-    args = parser.parse_args(argv[1:])
+    # Unknown args (e.g., pytest flags after --mode=pytest) are forwarded to
+    # the mode handler instead of erroring out.
+    args, extra = parser.parse_known_args(argv[1:])
+    args.extra = extra
     if parser.exited:
         args.exit = (parser.exited_status, parser.exited_message)
     else:
@@ -85,13 +88,29 @@ def _run_pilot(argv=None):
     return pilot.launch()
 
 
-def _run_pytest():
+def _run_pytest(extra_args=None):
+    """Run the pytest harness against modmesh's tests directory.
+
+    :param extra_args: Pytest options passed on the pilot command line
+        (after ``--mode=pytest``). When non-empty, takes precedence over
+        the ``PYTEST_OPTS`` environment variable, which is the path used
+        by ``make run_pilot_pytest PYTEST_OPTS=...``.
+    :type extra_args: list[str] or None
+    :returns: Pytest exit code.
+    :rtype: int
+    """
     # Import pytest locally to avoid making it a dependency to the whole
     # modmesh.
     import pytest
+    import shlex
     mmpath = os.path.join(os.path.dirname(modmesh.__file__), '..', 'tests')
     mmpath = os.path.abspath(mmpath)
-    return pytest.main(['-v', '-x', mmpath])
+    if extra_args:
+        opts = list(extra_args)
+    else:
+        env_opts = os.environ.get('PYTEST_OPTS', '')
+        opts = shlex.split(env_opts) if env_opts else ['-v', '-x']
+    return pytest.main(opts + [mmpath])
 
 
 def setup_process(argv):
@@ -106,10 +125,17 @@ def enter_main(argv):
     ret = 0
     if args.exit:
         ret = args.exit[0]
+    elif args.extra and args.mode != 'pytest':
+        # Extra args are only meaningful in pytest mode (forwarded to the
+        # pytest runner). Reject them in other modes to surface typos.
+        sys.stderr.write(
+            'mode "{}" does not accept extra arguments: {}\n'.format(
+                args.mode, ' '.join(args.extra)))
+        ret = 2
     elif 'pilot' == args.mode:
         ret = _run_pilot(argv)
     elif 'pytest' == args.mode:
-        ret = _run_pytest()
+        ret = _run_pytest(args.extra)
     elif 'python' == args.mode:
         sys.stderr.write('mode "python" should not run in Python main')
         ret = 1

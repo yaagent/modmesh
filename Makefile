@@ -117,6 +117,11 @@ buildext: cmake
 install: cmake
 	cmake --build $(BUILD_PATH) --target $@ VERBOSE=$(VERBOSE) $(MAKE_PARALLEL)
 
+# Pass PYTEST_OPTS to forward arguments to the pytest harness. Examples:
+# Example for one file:
+#   make pytest PYTEST_OPTS='-k test_buffer.py'
+# Example for one class:
+#   make pytest PYTEST_OPTS='-v -k SimpleArrayBasicTC'
 .PHONY: pytest
 pytest: buildext
 	env $(RUNENV) \
@@ -146,9 +151,16 @@ pilot: cmake
 gtest: cmake
 	cmake --build $(BUILD_PATH) --target run_gtest VERBOSE=$(VERBOSE) $(MAKE_PARALLEL)
 
+# Pass PYTEST_OPTS to forward arguments to the pytest harness running
+# inside the pilot binary.
+# Example for one file:
+#   make run_pilot_pytest PYTEST_OPTS='-k test_buffer.py'
+# Example for one class:
+#   make run_pilot_pytest PYTEST_OPTS='-v -k SimpleArrayBasicTC'
 .PHONY: run_pilot_pytest
 run_pilot_pytest: pilot
-	cmake --build $(BUILD_PATH) --target $@ VERBOSE=$(VERBOSE)
+	env $(RUNENV) PYTEST_OPTS="$(PYTEST_OPTS)" \
+		cmake --build $(BUILD_PATH) --target $@ VERBOSE=$(VERBOSE)
 
 .PHONY: standalone_buffer_setup
 standalone_buffer_setup:
