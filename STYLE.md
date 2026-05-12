@@ -1,582 +1,559 @@
-====
-Coding Style Guide
-====
+# Coding Style Guide
 
 A code style guideline is to help developers align how they write and change
 code. The consistency reduces the cost to  maintain and develop the code, and
 the former matters more than the latter, because the former costs more than the
 latter.
 
-modmesh uses `clang-format <https://clang.llvm.org/docs/ClangFormat.html>`__ to
-lint C++ code and `flake8 <https://flake8.pycqa.org/>`__ to lint Python code
-according to `PEP-8 <https://peps.python.org/pep-0008/>`__. We mind the code
+modmesh uses [clang-format](https://clang.llvm.org/docs/ClangFormat.html) to
+lint C++ code and [flake8](https://flake8.pycqa.org/) to lint Python code
+according to [PEP-8](https://peps.python.org/pep-0008/). We mind the code
 style when adding new code and changing existing code. The rules of thumb are:
 
 1. The linters must be clean. Before creating and updating a
-   `pull request <https://docs.github.com/en/pull-requests/>`__, run:
+   [pull request](https://docs.github.com/en/pull-requests/), run:
 
-   .. code-block:: bash
-
-     make lint
+```bash
+make lint
+```
 
 2. Read the code nearby and follow the style. Start from the functions and
    classes that the code resides in. Then get familiar with the style in the
    file and follow it. Familiar with the code in the module(s) if time permits.
 3. Use the style guide.
 
-Indentation and file format
-====
+## Indentation and file format
 
 Use 4 white spaces for indentation. Do not use a tab.
 
 C++ files do not have a text width limit, but it is good for a line to be less
 than 120 characters. Python files should use a text width of 79 characters.
 
-Use UTF-8 as file encoding and `UNIX text file format
-<http://en.wikipedia.org/wiki/Newline>`__. Do not use DOS file format.
+Use UTF-8 as file encoding and [UNIX text file format](http://en.wikipedia.org/wiki/Newline). Do not use DOS file format.
 
-Vim modelines
-----
+### Vim modelines
 
 Even if you do not use vim, add the modeline at the end of files to document
 the required file format:
 
-* ``ff=unix``: Use the `UNIX text file format
-  <http://en.wikipedia.org/wiki/Newline>`__ (``\n`` line ending).
-* ``fenc=utf8``: Use UTF-8 for encoding.
-* ``et``: Expand tabs. Do not use tabs for modmesh.
-* ``sw=4 ts=4 sts=4``: Use 4 white spaces for tabs.
+* `ff=unix`: Use the [UNIX text file format](http://en.wikipedia.org/wiki/Newline) (`\n` line ending).
+* `fenc=utf8`: Use UTF-8 for encoding.
+* `et`: Expand tabs. Do not use tabs for modmesh.
+* `sw=4 ts=4 sts=4`: Use 4 white spaces for tabs.
 
 The modeline for C++ is:
 
-.. code-block:: cpp
-
-  // vim: set ff=unix fenc=utf8 et sw=4 ts=4 sts=4:
+```cpp
+// vim: set ff=unix fenc=utf8 et sw=4 ts=4 sts=4:
+```
 
 The modeline for Python is:
 
-.. code-block:: python
+```python
+# vim: set ff=unix fenc=utf8 et sw=4 ts=4 sts=4 tw=79:
+```
 
-  # vim: set ff=unix fenc=utf8 et sw=4 ts=4 sts=4 tw=79:
+In Python, set the text width to 79 (`tw=79`).
 
-In Python, set the text width to 79 (``tw=79``).
+### Space and Blank Line
 
-Space and Blank Line
-----
+Leave a space behind `,` (commas):
 
-Leave a space behind ``,`` (commas):
-
-.. code-block:: cpp
-
-  void help_something(int32_t serial, double value);
+```cpp
+void help_something(int32_t serial, double value);
+```
 
 Use a blank line between the definitions of classes and functions.
 
-Naming
-====
+## Naming
 
 Do not use a name (especially for a variable) with only 1 character.
 
-Prefer to use ``UPPER_CASE`` for constants. In C++ sometimes ``snake_case``
+Prefer to use `UPPER_CASE` for constants. In C++ sometimes `snake_case`
 is preferred when it involves a foreign code base.
 
-Functions and variables use ``snake_case`` and classes use ``CamelCase`` in
+Functions and variables use `snake_case` and classes use `CamelCase` in
 both C++ and Python.
 
 Member data and functions in a C++ class use the same naming convention
-regardless of access (``public``, ``protected``, and ``private``). Member data
-should be prefixed with ``m_`` like ``m_snake_case``, unless it is for a POD
+regardless of access (`public`, `protected`, and `private`). Member data
+should be prefixed with `m_` like `m_snake_case`, unless it is for a POD
 (plain-old-data) struct.
 
 C++ types (classes) for type aliasing and template meta-programming follow STL
-and use ``snake_case_t`` or ``snake_case_type``, e.g., ``size_type``
+and use `snake_case_t` or `snake_case_type`, e.g., `size_type`
 
-.. code-block:: cpp
+```cpp
+class MyPowerHouse
+{
 
-  class MyPowerHouse
-  {
+public:
 
-  public:
+    void do_something();
 
-      void do_something();
+private:
 
-  private:
+    void help_something();
 
-      void help_something();
+    int32_t m_serial_number;
 
-      int32_t m_serial_number;
+}; /* end class MyPowerHouse */
 
-  }; /* end class MyPowerHouse */
+struct PureData
+{
 
-  struct PureData
-  {
+    // Member data names in POD are usually short for easy access.
+    int32_t serial;
+    double x, y;
 
-      // Member data names in POD are usually short for easy access.
-      int32_t serial;
-      double x, y;
-
-  }; /* end struct PureData */
+}; /* end struct PureData */
+```
 
 In a Python class, public attributes and methods (member functions) use normal
-``snake_case``. Non-public (nothing is really private in Python) attributes and
-methods use ``_leading_underscore_snake_case`` (unmangled) and
-``__double_leading_underscore_snake_case`` (mangled).
+`snake_case`. Non-public (nothing is really private in Python) attributes and
+methods use `_leading_underscore_snake_case` (unmangled) and
+`__double_leading_underscore_snake_case` (mangled).
 
-Python exceptions are Python classes and use ``CamelCase``.
+Python exceptions are Python classes and use `CamelCase`.
 
-Do the best to name a function like ``verb_objective()`` (in both C++ and
+Do the best to name a function like `verb_objective()` (in both C++ and
 Python).
 
-.. code-block:: python
+```python
+# function.
+take_some_action(from_this, with_that)
+# method.
+some_object.do_something(with_some_information)
+```
 
-  # function.
-  take_some_action(from_this, with_that)
-  # method.
-  some_object.do_something(with_some_information)
-
-Acronym
-----
+### Acronym
 
 Treat acronyms like a word. Do not make them all-upper-cases in names.
 
-.. code-block:: cpp
+```cpp
+// "Http" is treated like a word in CamelCase.
+class HttpRequest
+{
+    // "http" is treated like a word in snake_case.
+    void update_http_header();
+} /* end class HttpRequest */
+```
 
-  // "Http" is treated like a word in CamelCase.
-  class HttpRequest
-  {
-      // "http" is treated like a word in snake_case.
-      void update_http_header();
-  } /* end class HttpRequest */
+### Qt
 
-Qt
-----
+For Qt sub-classes, follow the Qt naming style, but prefix with `R` instead
+of `Q` and put them in the `modmesh` namespace. (Why "`R`"? It is the
+next character than "`Q`" and we want to distinguish the classes derived in
+modmesh.) Use `camelCase` (note the leading lower-case character) for
+functions. Member data should use `m_snake_case` as other modmesh C++ class.
 
-For Qt sub-classes, follow the Qt naming style, but prefix with ``R`` instead
-of ``Q`` and put them in the ``modmesh`` namespace. (Why "``R``"? It is the
-next character than "``Q``" and we want to distinguish the classes derived in
-modmesh.) Use ``camelCase`` (note the leading lower-case character) for
-functions. Member data should use ``m_snake_case`` as other modmesh C++ class.
+### Iterating Counter
 
-Iterating Counter
-----
+Iterating counters start with `i`, `j`, `k`.
 
-Iterating counters start with ``i``, ``j``, ``k``.
-
-- Trivial indexing variables can be named as ``it``, ``jt``, or ``kt``.
-- Standalone ``i``, ``j``, and ``k`` should never be used to name a variable
+- Trivial indexing variables can be named as `it`, `jt`, or `kt`.
+- Standalone `i`, `j`, and `k` should never be used to name a variable
   because they are too short.
 
-Shorthands for Unstructured Meshes
-----
+### Shorthands for Unstructured Meshes
 
 Code for the unstructured meshes carries geometrical terms and needs shorthands
 to keep the line width reasonable.
 
 - Two-character names for nodes, faces, and cells:
 
-  - ``nd``: node/vertex.
-  - ``fc``: face.
-  - ``cl``: cell.
-- For example, ``icl`` is a counter of cell.
+  - `nd`: node/vertex.
+  - `fc`: face.
+  - `cl`: cell.
+- For example, `icl` is a counter of cell.
 - The following prefices often (but not always) means serial numbers:
 
-  - ``nxx``: number of ``xx``, e.g., ``ncl`` is number of cells.
-  - ``mxx``: maximum number of ``xx``, e.g., ``mfc`` is the maximum number of
+  - `nxx`: number of `xx`, e.g., `ncl` is number of cells.
+  - `mxx`: maximum number of `xx`, e.g., `mfc` is the maximum number of
     faces.
 
 More examples:
 
-- ``clnnd`` means number of nodes belonging to a cell.
-- ``FCMND`` means maximum number of nodes for a face.
-- ``icl`` means the first-level (iterating) index of cell.
-- ``jfc`` means the second-level (iterating) index of face.
+- `clnnd` means number of nodes belonging to a cell.
+- `FCMND` means maximum number of nodes for a face.
+- `icl` means the first-level (iterating) index of cell.
+- `jfc` means the second-level (iterating) index of face.
 - Some special iterators used in code, such as:
 
-  - ``clfcs(icl, ifl)``: get the ``ifl``-th face in ``icl``-th cell.
-  - ``fcnds(ifc, inf)``: get the ``inf``-th fact in ``ifc``-th face.
+  - `clfcs(icl, ifl)`: get the `ifl`-th face in `icl`-th cell.
+  - `fcnds(ifc, inf)`: get the `inf`-th fact in `ifc`-th face.
 
-Python import
-====
+## Python import
 
-Never import everything ("``import *``" or "``from mod import *``").
+Never import everything ("`import *`" or "`from mod import *`").
 
 Only import modules, not module content (classes, functions, or constants).
-Use ``from`` to specify the module path and ``import`` to import the module:
+Use `from` to specify the module path and `import` to import the module:
 
-.. code-block:: python
+```python
+# Mind the order of the lines importing the modules.
+# Modules in standard library.
+import os
+import sys
+import typing
+import dataclasses
+import pathlib
 
-  # Mind the order of the lines importing the modules.
-  # Modules in standard library.
-  import os
-  import sys
-  import typing
-  import dataclasses
-  import pathlib
+# Modules from third-party.
+import numpy as np
+from matplotlib.backends import backend_qtagg
+from matplotlib import figure
+from PySide6 import QtCore, QtWidgets, QtGui
 
-  # Modules from third-party.
-  import numpy as np
-  from matplotlib.backends import backend_qtagg
-  from matplotlib import figure
-  from PySide6 import QtCore, QtWidgets, QtGui
+# Modules in the current project.
+import modmesh as mm
+from modmesh import onedim
+from modmesh.plot import svg
 
-  # Modules in the current project.
-  import modmesh as mm
-  from modmesh import onedim
-  from modmesh.plot import svg
+# Explicit relative import is OK.
+from . import core
+from . import _base_app
+```
 
-  # Explicit relative import is OK.
-  from . import core
-  from . import _base_app
 
-.. note::
+> **Note:**
+>
+> `modmesh` can be shorthanded as `mm`.
 
-  ``modmesh`` can be shorthanded as ``mm``.
 
 Do not import module content (classes, functions, or constants) directly.
-Always use the ``foo.bar`` pattern to access classes, functions, or constants:
+Always use the `foo.bar` pattern to access classes, functions, or constants:
 
-.. code-block:: python
+```python
+# BAD: imports a class, not a module.
+from typing import Any, Callable
+from dataclasses import dataclass
+from pathlib import Path
 
-  # BAD: imports a class, not a module.
-  from typing import Any, Callable
-  from dataclasses import dataclass
-  from pathlib import Path
+def foo(x: Any) -> Callable:
+    ...
+p = Path("/tmp")
 
-  def foo(x: Any) -> Callable:
-      ...
-  p = Path("/tmp")
+# GOOD: import the module and access content through it.
+import typing
+import dataclasses
+import pathlib
 
-  # GOOD: import the module and access content through it.
-  import typing
-  import dataclasses
-  import pathlib
+def foo(x: typing.Any) -> typing.Callable:
+    ...
+p = pathlib.Path("/tmp")
+```
 
-  def foo(x: typing.Any) -> typing.Callable:
-      ...
-  p = pathlib.Path("/tmp")
+```python
+# BAD: imports content from a sub-module.
+from matplotlib.figure import Figure
+from ._base_app import QuantityLine
 
-.. code-block:: python
+fig = Figure()
+line = QuantityLine(...)
 
-  # BAD: imports content from a sub-module.
-  from matplotlib.figure import Figure
-  from ._base_app import QuantityLine
+# GOOD: import the module.
+from matplotlib import figure
+from . import _base_app
 
-  fig = Figure()
-  line = QuantityLine(...)
+fig = figure.Figure()
+line = _base_app.QuantityLine(...)
+```
 
-  # GOOD: import the module.
-  from matplotlib import figure
-  from . import _base_app
 
-  fig = figure.Figure()
-  line = _base_app.QuantityLine(...)
+> **Note:**
+>
+> **Exception for Qt (PySide6):** Qt classes may be imported directly because
+> almost all Qt classes have a `Q` or `Qt` prefix that makes them
+> unmistakable, the module-qualified form (e.g., `QtWidgets.QDockWidget`)
+> reads mouthy with repeated `Q`, and the C++ counterpart does not use the
+> module name.
+>
+> ```python
+> # OK: import Qt classes directly.
+> from PySide6.QtCore import QTimer, Slot, Qt
+> from PySide6.QtWidgets import QDockWidget, QWidget
+> ```
 
-.. note::
-
-  **Exception for Qt (PySide6):** Qt classes may be imported directly because
-  almost all Qt classes have a ``Q`` or ``Qt`` prefix that makes them
-  unmistakable, the module-qualified form (e.g., ``QtWidgets.QDockWidget``)
-  reads mouthy with repeated ``Q``, and the C++ counterpart does not use the
-  module name.
-
-  .. code-block:: python
-
-    # OK: import Qt classes directly.
-    from PySide6.QtCore import QTimer, Slot, Qt
-    from PySide6.QtWidgets import QDockWidget, QWidget
 
 Use relative import for peer modules in the same package:
 
-.. code-block:: python
+```python
+# For a module file in modmesh/pilot/
+# BAD: use absolute import for peer modules.
+from modmesh.pilot import _gui
+from modmesh.pilot.airfoil import _naca
 
-  # For a module file in modmesh/pilot/
-  # BAD: use absolute import for peer modules.
-  from modmesh.pilot import _gui
-  from modmesh.pilot.airfoil import _naca
-
-  # GOOD: use relative import for peer modules.
-  from . import _gui
-  from .airfoil import _naca
+# GOOD: use relative import for peer modules.
+from . import _gui
+from .airfoil import _naca
+```
 
 Relative import may not be required for modules outside the current package:
 
-.. code-block:: python
+```python
+# For a module file in modmesh/pilot/
+# GOOD: use absolute import for non-peer modules.
+from modmesh.plot import svg
 
-  # For a module file in modmesh/pilot/
-  # GOOD: use absolute import for non-peer modules.
-  from modmesh.plot import svg
+# OK but may be clumsy: use relative import.
+from ..plot import svg
+```
 
-  # OK but may be clumsy: use relative import.
-  from ..plot import svg
+Do not use dotted import path with `import` for project modules:
 
-Do not use dotted import path with ``import`` for project modules:
+```python
+# BAD: uses dotted path instead of from...import.
+import modmesh.plot.svg as svg
 
-.. code-block:: python
-
-  # BAD: uses dotted path instead of from...import.
-  import modmesh.plot.svg as svg
-
-  # GOOD: use from to specify the path.
-  from modmesh.plot import svg
+# GOOD: use from to specify the path.
+from modmesh.plot import svg
+```
 
 Do not import multiple modules in one line:
 
-.. code-block:: python
-
-  # BAD BAD BAD
-  import os, sys
+```python
+# BAD BAD BAD
+import os, sys
+```
 
 Never do implicit relative import:
 
-.. code-block:: python
+```python
+# BAD for modules in the current project.
+import onedim
+```
 
-  # BAD for modules in the current project.
-  import onedim
+## Integer Type
 
-Integer Type
-====
+Use fixed-width integers (`int32_t`, `uint8_t`, etc.) Do not use the basic
+integer types (`int`, `long`, etc.) unless there is not another choice.
 
-Use fixed-width integers (``int32_t``, ``uint8_t``, etc.) Do not use the basic
-integer types (``int``, ``long``, etc.) unless there is not another choice.
+## C++ Comment
 
-C++ Comment
-====
-
-Comment blocks follow `the doxygen style guidelines
-<https://www.doxygen.nl/manual/docblocks.html>`__ if convenient.
+Comment blocks follow [the doxygen style guidelines](https://www.doxygen.nl/manual/docblocks.html) if convenient.
 
 If possible, provide references to literature or documents in comments.
 
-C++ Include File
-====
+## C++ Include File
 
-The inclusion guard uses ``#pragma once`` in the first line before everything.
+The inclusion guard uses `#pragma once` in the first line before everything.
 
 Always use path-first inclusion (angle branket). Do not use current-first
 (double quote).
 
-.. code-block:: cpp
+```cpp
+// Use this: search for include file start with the paths to the compiler.
+#include <modmesh/base.hpp>
+// Do not use this. This starts to search from the directory of the file.
+#include "modmesh/toggle.hpp"
+```
 
-  // Use this: search for include file start with the paths to the compiler.
-  #include <modmesh/base.hpp>
-  // Do not use this. This starts to search from the directory of the file.
-  #include "modmesh/toggle.hpp"
+## C++ Namespace
 
-C++ Namespace
-====
+Put everything in the `modmesh` namespace.
 
-Put everything in the ``modmesh`` namespace.
-
-Never ``using namespace`` outside a local scope (like a function). Another
-namepsace is not a local scope and should not ``using namespace``. When
-accessing something in a namespace (e.g., ``modmesh``) from outside, spell
+Never `using namespace` outside a local scope (like a function). Another
+namepsace is not a local scope and should not `using namespace`. When
+accessing something in a namespace (e.g., `modmesh`) from outside, spell
 out the full name:
 
-.. code-block:: cpp
+```cpp
+// An anonymouse namespace
+namespace
+{
 
-  // An anonymouse namespace
-  namespace
-  {
+modmesh::real_type local_function(modmesh::int_type value);
 
-  modmesh::real_type local_function(modmesh::int_type value);
+} /* end namespace */
+```
 
-  } /* end namespace */
-
-The namespace ``modmesh`` may be aliased to ``mm`` in a local scope. No alias
+The namespace `modmesh` may be aliased to `mm` in a local scope. No alias
 should be use outside a local scope.
 
-.. code-block:: cpp
+```cpp
+modmesh::real_type local_function(modmesh::int_type value)
+{
+    // Alias the modmesh namespace to mm.
+    namespace mm = modmesh;
+    return mm::real_type(value); // Same as modmesh::real_type(value);
+}
+```
 
-  modmesh::real_type local_function(modmesh::int_type value)
-  {
-      // Alias the modmesh namespace to mm.
-      namespace mm = modmesh;
-      return mm::real_type(value); // Same as modmesh::real_type(value);
-  }
+Needless to say that `using namespace std;` is absolutely forbidden.
 
-Needless to say that ``using namespace std;`` is absolutely forbidden.
+### Implementation Detail
 
-Implementation Detail
-----
+Name the namespace for implementation details to `detail`.
 
-Name the namespace for implementation details to ``detail``.
+```cpp
+namespace modmesh
+{
 
-.. code-block:: cpp
+namespace detail
+{
+    // Implementation detail
+} /* end namespace detail */
 
-  namespace modmesh
-  {
+} /* end namespace modmesh */
+```
 
-  namespace detail
-  {
-      // Implementation detail
-  } /* end namespace detail */
+## C Pre-Processor Macro
 
-  } /* end namespace modmesh */
-
-C Pre-Processor Macro
-====
-
-Prefix macros with ``MM_DECL_``. If they are not supposed to be used as a
+Prefix macros with `MM_DECL_`. If they are not supposed to be used as a
 global helper, delete them after consumption.
 
-C++ Standard
-====
+## C++ Standard
 
 Use C++-17 and beyond.
 
-Follow the `rule of five
-<https://en.cppreference.com/w/cpp/language/rule_of_three>`__. Most of the time
+Follow the [rule of five](https://en.cppreference.com/w/cpp/language/rule_of_three). Most of the time
 just spell out all default implementation of constructors and assignment
 operators and group them together:
 
-.. code-block:: cpp
+```cpp
+class MyClass
+{
+public:
+    // Listing all default implementation will make the intention clear and
+    // it is easier to change from default to delete.
 
-  class MyClass
-  {
-  public:
-      // Listing all default implementation will make the intention clear and
-      // it is easier to change from default to delete.
+    // Default constructor.
+    MyClass() = default;
+    // Copy constructor.
+    MyClass(MyClass const &) = default;
+    // Move constructor.
+    MyClass(MyClass &&) = default;
+    // Copy assignment operator.
+    MyClass & operator=(MyClass const &) = default;
+    // Move assignment operator.
+    MyClass & operator=(MyClass &&) = default;
+    // Destructor.
+    ~MyClass() = default;
+}; /* end class MyClass */
+```
 
-      // Default constructor.
-      MyClass() = default;
-      // Copy constructor.
-      MyClass(MyClass const &) = default;
-      // Move constructor.
-      MyClass(MyClass &&) = default;
-      // Copy assignment operator.
-      MyClass & operator=(MyClass const &) = default;
-      // Move assignment operator.
-      MyClass & operator=(MyClass &&) = default;
-      // Destructor.
-      ~MyClass() = default;
-  }; /* end class MyClass */
-
-C++ Encapsulation
-====
+## C++ Encapsulation
 
 Prefer encapsulated classes over POD struct so that we always provide
 accessors. We provide accessors for even scalars of fundamental types.
 
-.. code-block:: cpp
+```cpp
+class MyPowerHouse
+{
 
-  class MyPowerHouse
-  {
+public:
 
-  public:
+    void calculate_internal_data();
 
-      void calculate_internal_data();
+    // Use the same-name style for accessors.
+    double internal_value() const { return m_internal_value; }
+    double & internal_value() { return m_internal_value; }
 
-      // Use the same-name style for accessors.
-      double internal_value() const { return m_internal_value; }
-      double & internal_value() { return m_internal_value; }
+    // It may be good to have a blank line between accessor pairs.
+    SimpleArray<double> const & internal_data() const { return m_internal_data; }
+    SimpleArray<double> & internal_data() { return m_internal_data; }
 
-      // It may be good to have a blank line between accessor pairs.
-      SimpleArray<double> const & internal_data() const { return m_internal_data; }
-      SimpleArray<double> & internal_data() { return m_internal_data; }
+private:
 
-  private:
+    double m_internal_value = 0.0;
+    SimpleArray<double> m_internal_data;
 
-      double m_internal_value = 0.0;
-      SimpleArray<double> m_internal_data;
+}; /* end class MyPowerHouse */
+```
 
-  }; /* end class MyPowerHouse */
-
-Prefer Same-Name Accessors
-----
+### Prefer Same-Name Accessors
 
 (Python does not need accessors. Do not add accessors in Python code.)
 
 Prefer same-name accessors because we expose a lot of internal containers:
 
-.. code-block:: cpp
+```cpp
+// Getter is const and return a copy of a fundamental type.
+double internal_value() const { return m_internal_value; }
+// Setter is non-const and return a reference.
+double & internal_value() { return m_internal_value; }
 
-  // Getter is const and return a copy of a fundamental type.
-  double internal_value() const { return m_internal_value; }
-  // Setter is non-const and return a reference.
-  double & internal_value() { return m_internal_value; }
-
-  // Getter is const and return a const reference of a non-fundamental type.
-  SimpleArray<double> const & internal_data() const { return m_internal_data; }
-  // Setter is non-const and return a reference.
-  SimpleArray<double> & internal_data() { return m_internal_data; }
+// Getter is const and return a const reference of a non-fundamental type.
+SimpleArray<double> const & internal_data() const { return m_internal_data; }
+// Setter is non-const and return a reference.
+SimpleArray<double> & internal_data() { return m_internal_data; }
+```
 
 Sometimes we may use the getter-and-setter style to supplement the same-name
 accessors:
 
-.. code-block:: cpp
+```cpp
+// Getter is const and return a copy of a fundamental type.
+double get_internal_value() const { return m_internal_value; }
+// Setter takes
+void set_internal_value(double v) { m_internal_value = v; }
 
-  // Getter is const and return a copy of a fundamental type.
-  double get_internal_value() const { return m_internal_value; }
-  // Setter takes
-  void set_internal_value(double v) { m_internal_value = v; }
-
-  // Getter is const and return a const reference of a non-fundamental type.
-  SimpleArray<double> const & internal_data() const { return m_internal_data; }
-  // Setter is non-const and return a reference.
-  SimpleArray<double> & internal_data() { return m_internal_data; }
+// Getter is const and return a const reference of a non-fundamental type.
+SimpleArray<double> const & internal_data() const { return m_internal_data; }
+// Setter is non-const and return a reference.
+SimpleArray<double> & internal_data() { return m_internal_data; }
+```
 
 It is OK for accessors of the same-name and getter-and-setter styles to be
 available for the same member datum, but we should only do it when necessary.
 
-C++ Ending Mark
-====
+## C++ Ending Mark
 
 Add ending marks to classes and namespaces.  They are usually too long (across
 hundreds of lines) to keep track of.
 
-.. code-block:: cpp
+```cpp
+namespace modmesh
+{
 
-  namespace modmesh
-  {
+class MyClass
+{
+    // Code.
+}; /* end class MyClass */
 
-  class MyClass
-  {
-      // Code.
-  }; /* end class MyClass */
+} /* end namespace modmesh */
+```
 
-  } /* end namespace modmesh */
+## C++ STL Containers
 
-C++ STL Containers
-====
-
-Replace ``std::vector`` with ``SimpleCollector`` when ``value_type`` is a
-fundamental type. Use ``small_vector`` for a small amount of data.
+Replace `std::vector` with `SimpleCollector` when `value_type` is a
+fundamental type. Use `small_vector` for a small amount of data.
 
 Do not use STL containers for member data unless it is just in a prototype
-phase. In that case, add a ``TODO`` comment and create a follow-up PR or issue
+phase. In that case, add a `TODO` comment and create a follow-up PR or issue
 to replace them:
 
-.. code-block:: cpp
+```cpp
+class MyClass
+{
 
-  class MyClass
-  {
+private:
 
-  private:
+    // GOOD: use SimpleCollector for fundamental types.
+    SimpleCollector<double> m_values;
 
-      // GOOD: use SimpleCollector for fundamental types.
-      SimpleCollector<double> m_values;
+    // BAD: do not use std::vector for member data.
+    std::vector<double> m_values;
 
-      // BAD: do not use std::vector for member data.
-      std::vector<double> m_values;
+    // OK only in prototype phase with a TODO comment.
+    // TODO: Replace with SimpleCollector (see issue #NNN).
+    std::vector<double> m_values;
 
-      // OK only in prototype phase with a TODO comment.
-      // TODO: Replace with SimpleCollector (see issue #NNN).
-      std::vector<double> m_values;
-
-  }; /* end class MyClass */
+}; /* end class MyClass */
+```
 
 For local variables, STL is sometimes acceptable but discouraged:
 
-.. code-block:: cpp
+```cpp
+void do_something()
+{
+    // Discouraged but sometimes OK for local variables.
+    std::vector<int32_t> temp_indices;
+}
+```
 
-  void do_something()
-  {
-      // Discouraged but sometimes OK for local variables.
-      std::vector<int32_t> temp_indices;
-  }
-
-C++ Function Body Placement
-====
+## C++ Function Body Placement
 
 Move non-accessor function bodies to be outside the class declaration when the
 code is not 2-3 times longer than an accessor. Keep short accessors inline in
@@ -586,159 +563,156 @@ bodies should be defined outside.
 If a function body is very simple (e.g., a single return or assignment
 statement), write it as a one-liner to keep the code compact:
 
-.. code-block:: cpp
+```cpp
+// GOOD: very simple function as a one-liner.
+double internal_value() const { return m_internal_value; }
+void set_flag(bool v) { m_flag = v; }
 
-  // GOOD: very simple function as a one-liner.
-  double internal_value() const { return m_internal_value; }
-  void set_flag(bool v) { m_flag = v; }
-
-  // BAD: unnecessary multi-line form for a trivial body.
-  double internal_value() const
-  {
-      return m_internal_value;
-  }
+// BAD: unnecessary multi-line form for a trivial body.
+double internal_value() const
+{
+    return m_internal_value;
+}
+```
 
 Other function bodies should be defined outside:
 
-.. code-block:: cpp
+```cpp
+class MyPowerHouse
+{
 
-  class MyPowerHouse
-  {
+public:
 
-  public:
+    // Short accessors stay inline in the class.
+    double internal_value() const { return m_internal_value; }
+    double & internal_value() { return m_internal_value; }
 
-      // Short accessors stay inline in the class.
-      double internal_value() const { return m_internal_value; }
-      double & internal_value() { return m_internal_value; }
+    // Declare non-trivial functions in the class, define outside.
+    void calculate_internal_data();
 
-      // Declare non-trivial functions in the class, define outside.
-      void calculate_internal_data();
+private:
 
-  private:
+    double m_internal_value = 0.0;
 
-      double m_internal_value = 0.0;
+}; /* end class MyPowerHouse */
 
-  }; /* end class MyPowerHouse */
+// Define non-accessor function bodies outside the class.
+void MyPowerHouse::calculate_internal_data()
+{
+    m_internal_value = 42.0;
+    // ... more logic ...
+}
+```
 
-  // Define non-accessor function bodies outside the class.
-  void MyPowerHouse::calculate_internal_data()
-  {
-      m_internal_value = 42.0;
-      // ... more logic ...
-  }
-
-C++ pybind11 Binding Style
-====
+## C++ pybind11 Binding Style
 
 When writing pybind11 bindings, separate constructors and other bindings
-(methods, properties, etc.) into two ``(*this)`` sections for readability. This
+(methods, properties, etc.) into two `(*this)` sections for readability. This
 can also be addressed in a future PR if not done immediately:
 
-.. code-block:: cpp
+```cpp
+// Inside a wrapper class constructor:
+(*this)
+    .def(pybind11::init<>())
+    .def(pybind11::init<int32_t>())
+    //
+    ;
 
-  // Inside a wrapper class constructor:
-  (*this)
-      .def(pybind11::init<>())
-      .def(pybind11::init<int32_t>())
-      //
-      ;
+(*this)
+    .def("do_something", &wrapped_type::do_something)
+    .def_property_readonly("value", &wrapped_type::value)
+    //
+    ;
+```
 
-  (*this)
-      .def("do_something", &wrapped_type::do_something)
-      .def_property_readonly("value", &wrapped_type::value)
-      //
-      ;
-
-C++ Curly Braces
-====
+## C++ Curly Braces
 
 Always add curly braces and always add them in standalone lines:
 
-.. code-block:: cpp
-
-  if (condition)
-  {
-      return;
-  }
+```cpp
+if (condition)
+{
+    return;
+}
+```
 
 That is, never drop curly braces even when you can:
 
-.. code-block:: cpp
+```cpp
+// NEVER DROP CURLY BRACES
+if (condition)
+    return;
+```
 
-  // NEVER DROP CURLY BRACES
-  if (condition)
-      return;
+## Copyright Notice
 
-Copyright Notice
-====
-
-modmesh uses the `BSD license <http://opensource.org/licenses/BSD-3-Clause>`__.
+modmesh uses the [BSD license](http://opensource.org/licenses/BSD-3-Clause).
 When creating a new file, put the following text at the top of the file
-(replace ``<Year>`` with the year you create the file and ``<Your Name>`` with
+(replace `<Year>` with the year you create the file and `<Your Name>` with
 your name and maybe email).  The license text formatted for C++ files:
 
-.. code-block:: cpp
-
-  /*
-   * Copyright (c) <Year>, <Your Name>
-   *
-   * Redistribution and use in source and binary forms, with or without
-   * modification, are permitted provided that the following conditions are met:
-   *
-   * - Redistributions of source code must retain the above copyright notice,
-   *   this list of conditions and the following disclaimer.
-   * - Redistributions in binary form must reproduce the above copyright notice,
-   *   this list of conditions and the following disclaimer in the documentation
-   *   and/or other materials provided with the distribution.
-   * - Neither the name of the copyright holder nor the names of its contributors
-   *   may be used to endorse or promote products derived from this software
-   *   without specific prior written permission.
-   *
-   * THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS"
-   * AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
-   * IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
-   * ARE DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT HOLDER OR CONTRIBUTORS BE
-   * LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR
-   * CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF
-   * SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS
-   * INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN
-   * CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE)
-   * ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
-   * POSSIBILITY OF SUCH DAMAGE.
-   */
+```cpp
+/*
+ * Copyright (c) <Year>, <Your Name>
+ *
+ * Redistribution and use in source and binary forms, with or without
+ * modification, are permitted provided that the following conditions are met:
+ *
+ * - Redistributions of source code must retain the above copyright notice,
+ *   this list of conditions and the following disclaimer.
+ * - Redistributions in binary form must reproduce the above copyright notice,
+ *   this list of conditions and the following disclaimer in the documentation
+ *   and/or other materials provided with the distribution.
+ * - Neither the name of the copyright holder nor the names of its contributors
+ *   may be used to endorse or promote products derived from this software
+ *   without specific prior written permission.
+ *
+ * THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS"
+ * AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
+ * IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
+ * ARE DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT HOLDER OR CONTRIBUTORS BE
+ * LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR
+ * CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF
+ * SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS
+ * INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN
+ * CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE)
+ * ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
+ * POSSIBILITY OF SUCH DAMAGE.
+ */
+```
 
 The license text formatted for Python files:
 
-.. code-block:: python
+```python
+# -*- coding: UTF-8 -*-
+#
+# Copyright (c) <Year>, <Your Name>
+#
+# All rights reserved.
+#
+# Redistribution and use in source and binary forms, with or without
+# modification, are permitted provided that the following conditions are met:
+#
+# - Redistributions of source code must retain the above copyright notice, this
+#   list of conditions and the following disclaimer.
+# - Redistributions in binary form must reproduce the above copyright notice,
+#   this list of conditions and the following disclaimer in the documentation
+#   and/or other materials provided with the distribution.
+# - Neither the name of the copyright holder nor the names of its contributors
+#   may be used to endorse or promote products derived from this software
+#   without specific prior written permission.
+#
+# THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS"
+# AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
+# IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
+# ARE DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT HOLDER OR CONTRIBUTORS BE
+# LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR
+# CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF
+# SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS
+# INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN
+# CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE)
+# ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
+# POSSIBILITY OF SUCH DAMAGE.
+```
 
-  # -*- coding: UTF-8 -*-
-  #
-  # Copyright (c) <Year>, <Your Name>
-  #
-  # All rights reserved.
-  #
-  # Redistribution and use in source and binary forms, with or without
-  # modification, are permitted provided that the following conditions are met:
-  #
-  # - Redistributions of source code must retain the above copyright notice, this
-  #   list of conditions and the following disclaimer.
-  # - Redistributions in binary form must reproduce the above copyright notice,
-  #   this list of conditions and the following disclaimer in the documentation
-  #   and/or other materials provided with the distribution.
-  # - Neither the name of the copyright holder nor the names of its contributors
-  #   may be used to endorse or promote products derived from this software
-  #   without specific prior written permission.
-  #
-  # THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS"
-  # AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
-  # IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
-  # ARE DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT HOLDER OR CONTRIBUTORS BE
-  # LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR
-  # CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF
-  # SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS
-  # INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN
-  # CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE)
-  # ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
-  # POSSIBILITY OF SUCH DAMAGE.
-
-.. vim: set ft=rst ff=unix fenc=utf8 et sw=2 ts=2 sts=2:
+<!-- vim: set ft=markdown ff=unix fenc=utf8 et sw=2 ts=2 sts=2: -->

@@ -184,7 +184,7 @@ Python interface in `modmesh/`:
 
 ## Code Style
 
-For complete description of the code style, use the file `STYLE.rst`.  Important
+For complete description of the code style, use the file `STYLE.md`.  Important
 styles are summarized here.
 
 ### C++ Code Format
@@ -316,7 +316,7 @@ any dependency requires user review and consent.
 **macOS**: System Integrity Protection (SIP) may interfere with
 `DYLD_LIBRARY_PATH`. The Makefile sets `PYTHONPATH` as a workaround.
 
-**Windows**: Portable binaries available from GitHub Actions (see README.rst).
+**Windows**: Portable binaries available from GitHub Actions (see README.md).
 
 ## Profiling System
 
