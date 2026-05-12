@@ -29,14 +29,16 @@ Use 4 white spaces for indentation. Do not use a tab.
 C++ files do not have a text width limit, but it is good for a line to be less
 than 120 characters. Python files should use a text width of 79 characters.
 
-Use UTF-8 as file encoding and [UNIX text file format](http://en.wikipedia.org/wiki/Newline). Do not use DOS file format.
+Use UTF-8 as file encoding and [UNIX text file
+format](http://en.wikipedia.org/wiki/Newline). Do not use DOS file format.
 
 ### Vim modelines
 
 Even if you do not use vim, add the modeline at the end of files to document
 the required file format:
 
-* `ff=unix`: Use the [UNIX text file format](http://en.wikipedia.org/wiki/Newline) (`\n` line ending).
+* `ff=unix`: Use the [UNIX text file
+  format](http://en.wikipedia.org/wiki/Newline) (`\n` line ending).
 * `fenc=utf8`: Use UTF-8 for encoding.
 * `et`: Expand tabs. Do not use tabs for modmesh.
 * `sw=4 ts=4 sts=4`: Use 4 white spaces for tabs.
@@ -331,7 +333,8 @@ integer types (`int`, `long`, etc.) unless there is not another choice.
 
 ## C++ Comment
 
-Comment blocks follow [the doxygen style guidelines](https://www.doxygen.nl/manual/docblocks.html) if convenient.
+Comment blocks follow [the doxygen style
+guidelines](https://www.doxygen.nl/manual/docblocks.html) if convenient.
 
 If possible, provide references to literature or documents in comments.
 
@@ -407,8 +410,9 @@ global helper, delete them after consumption.
 
 Use C++-17 and beyond.
 
-Follow the [rule of five](https://en.cppreference.com/w/cpp/language/rule_of_three). Most of the time
-just spell out all default implementation of constructors and assignment
+Follow the [rule of
+five](https://en.cppreference.com/w/cpp/language/rule_of_three). Most of the
+time just spell out all default implementation of constructors and assignment
 operators and group them together:
 
 ```cpp
@@ -715,4 +719,4 @@ The license text formatted for Python files:
 # POSSIBILITY OF SUCH DAMAGE.
 ```
 
-<!-- vim: set ft=markdown ff=unix fenc=utf8 et sw=2 ts=2 sts=2: -->
+<!-- vim: set ft=markdown ff=unix fenc=utf8 et sw=2 ts=2 sts=2 tw=79: -->
