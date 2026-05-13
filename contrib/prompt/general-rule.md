@@ -26,7 +26,7 @@ success and iterate. Strong success criteria let you loop independently.
 Use Claude for: classification, drafting, summarization, extraction. Do NOT use
 Claude for: routing, retries, deterministic transforms. If code can answer,
 code answers. In this repo, hooks under `.claude/hooks/` own the deterministic
-checks (ASCII, trailing whitespace, modeline, line length); subagents own the
+checks (ASCII, trailing whitespace, modeline, line length); skills own the
 judgment calls.
 
 ## Rule 6 -- Token budgets surfaced, not hidden
@@ -52,9 +52,10 @@ can't fail when business logic changes is wrong.
 
 ## Rule 10 -- Checkpoint after every significant step
 Summarize what was done, what's verified, what's left. Don't continue from a
-state you can't describe back. If you lose track, stop and restate. The slash
-commands (`/build`, `/pytest`, `/gtest`, `/lint`, `/format`) end with an
-explicit verdict line; treat each as a checkpoint.
+state you can't describe back. If you lose track, stop and restate. After
+running `make` targets (`build`, `pytest`, `gtest`, `lint`), state an
+explicit verdict (clean / issues found / blocking) and treat it as a
+checkpoint.
 
 ## Rule 11 -- Match the codebase's conventions, even if you disagree
 Conformance > taste inside the codebase. If you genuinely think a convention is

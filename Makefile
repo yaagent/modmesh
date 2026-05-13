@@ -234,6 +234,8 @@ checktws:
 .PHONY: lint
 lint: cformat cinclude flake8 checkascii checktws
 
+# FIXME: Do not run pyformat. It is not yet configured to conform to the style
+# of the Python code in the code base. It is still work in progress.
 .PHONY: pyformat
 pyformat:
 	@command -v $(BLACK) >/dev/null 2>&1 || { \
@@ -243,6 +245,8 @@ pyformat:
 	}
 	$(BLACK) $(BLACK_OPTS) .
 
+# FIXME: Do not run format, which depends on pyformat, which is still work in
+# progress.
 .PHONY: format
 format: pyformat
 	@$(MAKE) FORCE_CLANG_FORMAT=inplace cformat

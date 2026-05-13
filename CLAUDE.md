@@ -17,33 +17,24 @@ unstructured meshes. The codebase emphasizes:
 
 ## Claude Code Tooling
 
-This repository ships a `.claude/` directory with permissions, hooks, slash
-commands, and subagents tuned to this codebase. General behavioral rules live
-in `contrib/prompt/general-rule.md` (not auto-imported). This section indexes
+This repository ships a `.claude/` directory with permissions, hooks, and
+skills tuned to this codebase. General behavioral rules live in
+`contrib/prompt/general-rule.md` (not auto-imported). This section indexes
 the tools.
 
-### Slash commands (`.claude/commands/`)
+### Skills (`.claude/skills/`)
 
-| Command           | Wraps                          | Notes                                              |
-| ----------------- | ------------------------------ | -------------------------------------------------- |
-| `/build [args]`   | `make $ARGUMENTS`              | Builds the Python extension by default.            |
-| `/pytest [args]`  | `make pytest PYTEST_OPTS=...`  | Forwards args via `PYTEST_OPTS`; default is full suite. |
-| `/gtest [args]`   | `make gtest` or `run_gtest`    | Forwards `--gtest_filter=...` to the built binary. |
-| `/lint [target]`  | `make lint`                    | Or a single sub-target (`flake8`, `cinclude`, ...). |
-| `/format [pyformat]` | `make format`               | `pyformat` runs Python-only.                       |
-
-All commands end with `verdict: clean | issues found | blocking`.
-
-### Subagents (`.claude/agents/`)
-
-- `cpp-style-reviewer` -- judgment-call C++ review (`m_` prefix, function-body
+- `cpp-style-review` -- judgment-call C++ review (`m_` prefix, function-body
   placement, `SimpleCollector` preference, pybind11 binding split,
-  `const_cast`). Scoped to `git diff`. Pinned `model: sonnet`.
-- `python-style-reviewer` -- judgment-call Python review (naming, test intent,
-  project conventions). Scoped to `git diff`. Pinned `model: sonnet`.
+  `const_cast`). Scoped to `git diff`. Invoke after editing files in `cpp/`
+  or `gtests/`.
+- `python-style-review` -- judgment-call Python review (naming, test intent,
+  project conventions). Scoped to `git diff`. Invoke after editing files in
+  `modmesh/` or `tests/`.
 
-Deterministic style checks (ASCII, trailing whitespace, modeline, 79-char
-Python lines) are owned by hooks, not subagents.
+Skills inherit the caller's model rather than pinning their own. Deterministic
+style checks (ASCII, trailing whitespace, modeline, 79-char Python lines) are
+owned by hooks, not skills.
 
 ### Hooks (`.claude/hooks/`)
 
@@ -62,19 +53,50 @@ Python lines) are owned by hooks, not subagents.
 - `statusLine` runs `.claude/statusline.sh` -- shows model, project, branch
   (with `*` if dirty), and context-window usage.
 
-## Build Commands
+## Build, Test, Lint, Format
 
-Prefer the slash commands listed above (`/build`, `/pytest`, `/gtest`,
-`/lint`, `/format`). The underlying `make` targets are: `make` (Python
-extension; default), `make pytest`, `make gtest`, `make pilot`,
-`make run_pilot_pytest`, `make pyprof`, `make lint` (or individual:
-`cinclude`, `flake8`, `checkascii`, `checktws`, `cformat`), `make pyformat`,
-`make format` (in-place C++ + Python), `make clean`, `make cmakeclean`.
+All workflows are driven through `make` from the repo root. The Makefile sets
+`PYTHONPATH=$(MODMESH_ROOT)` so the in-tree `_modmesh` extension is picked up
+without installation, and works around macOS SIP stripping `DYLD_LIBRARY_PATH`.
 
-Any target whose tool (`clang-format`, `flake8`, `black`) is missing prints an
-install hint and exits 1. `make cformat` also warns when the local
-`clang-format` major version differs from the CI pin (`CLANG_FORMAT_CI_VERSION`
-in the Makefile).
+**Build**
+
+- `make` -- build the `_modmesh` Python extension (default target).
+- `make pilot` -- build the Qt pilot GUI binary.
+- `make clean` / `make cmakeclean` -- remove build artifacts.
+
+**Test**
+
+- `make pytest` -- full Python test suite.
+- `make pytest PYTEST_OPTS="tests/test_buffer.py::SimpleArrayBasicTC::test_sort"`
+  -- run a single test or subset; `PYTEST_OPTS` is forwarded verbatim to
+  pytest.
+- `make run_pilot_pytest` -- Python tests that require the pilot GUI;
+  accepts `PYTEST_OPTS` the same way.
+- `make gtest` -- build and run the full C++ test suite.
+- `./build/rel<pyvminor>/gtests/run_gtest --gtest_filter=Suite.Test` -- run a
+  single gtest after `make gtest` has built the binary
+  (`<pyvminor>` is the Python major+minor, e.g. `314`).
+- `make pyprof` -- run profiling benchmarks; results land in
+  `profiling/results/`.
+
+**Lint** (`make lint` runs all five)
+
+- `make cformat` -- check C++ formatting (read-only; use
+  `make FORCE_CLANG_FORMAT=inplace cformat` to fix).
+- `make cinclude` -- check `#include` ordering and style.
+- `make flake8` -- Python style and 79-char line limit.
+- `make checkascii` -- reject non-ASCII bytes in source.
+- `make checktws` -- reject trailing whitespace.
+
+**Format**
+
+Automatic formatting is still work in progress. Do not run `make format` or
+`make pyformat`.
+
+Any target whose tool (`clang-format`, `flake8`) is missing prints an install
+hint and exits 1. `make cformat` also warns when the local `clang-format` major
+version differs from the CI pin (`CLANG_FORMAT_CI_VERSION` in the Makefile).
 
 ### Build Configuration
 
@@ -140,17 +162,12 @@ Python interface in `modmesh/`:
 
 ### Testing Structure
 
-- **Python tests** (`tests/`): pytest-based
-  - Named `test_*.py`
-  - Run with `make pytest`
+- **Python tests** (`tests/`): pytest-based, files named `test_*.py`.
+- **C++ tests** (`gtests/`): googletest-based, files named
+  `test_nopython_*.cpp`.
+- **Profiling benchmarks** (`profiling/`): files named `profile_*.py`.
 
-- **C++ tests** (`gtests/`): googletest-based
-  - Named `test_nopython_*.cpp`
-  - Run with `make gtest`
-
-- **Profiling benchmarks** (`profiling/`): performance tests
-  - Named `profile_*.py`
-  - Run with `make pyprof`; outputs to `profiling/results/`
+See "Build, Test, Lint, Format" above for the `make` invocations.
 
 ## Code Style
 
@@ -166,8 +183,8 @@ How style is enforced in this repo:
 
 - `.claude/hooks/check-source.sh` owns the deterministic checks (ASCII bytes,
   trailing whitespace, modeline at EOF, Python `>79`-char lines).
-- The `cpp-style-reviewer` and `python-style-reviewer` subagents in
-  `.claude/agents/` own the judgment-call rules (`m_` prefix in context,
+- The `cpp-style-review` and `python-style-review` skills in
+  `.claude/skills/` own the judgment-call rules (`m_` prefix in context,
   function-body placement, container choice, pybind11 binding split, test
   intent). They are scoped to `git diff`.
 
@@ -181,16 +198,6 @@ When opening a pull request, reference the related issue (e.g., "Related to
 management.
 
 ## Development Workflow
-
-### Running Single Tests
-
-Prefer the slash commands (`/pytest <path or args>`,
-`/gtest --gtest_filter=Suite.Test`). Direct invocations:
-
-```bash
-make pytest PYTEST_OPTS="tests/test_buffer.py::SimpleArrayBasicTC::test_sort"
-./build/rel<pyvminor>/gtests/run_gtest --gtest_filter=Suite.Test
-```
 
 ### Build System Notes
 

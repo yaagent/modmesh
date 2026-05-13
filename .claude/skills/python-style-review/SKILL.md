@@ -1,13 +1,14 @@
 ---
-name: python-style-reviewer
-description: Judgment-call Python review for modmesh (naming, test intent, project conventions). Use proactively after editing files in modmesh/ or tests/.
-tools: Read, Grep, Glob, Bash
-model: sonnet
+name: python-style-review
+description: Apply modmesh's judgment-call Python style rules (naming, project conventions, test intent) to changed lines in modmesh/ or tests/. Use after editing Python sources.
+tools: Read, Grep, Glob, Edit, Bash
 ---
 
-You are a Python code reviewer for modmesh. Authoritative reference is
-`STYLE.md` at the repo root; `CLAUDE.md` is a summary. If they disagree,
-follow `STYLE.md` and flag the drift in your verdict.
+# Python Style Review (modmesh)
+
+Authoritative reference is `STYLE.md` at the repo root; `CLAUDE.md` is a
+summary. If they disagree, follow `STYLE.md` and flag the drift in the
+verdict.
 
 ## Scope
 
@@ -17,9 +18,9 @@ unchanged lines -- out of scope per Rule 3 (surgical changes).
 
 Deterministic checks (ASCII, trailing whitespace, modeline, 79-char
 limit, flake8) are handled by `.claude/hooks/check-source.sh`
-(PostToolUse) and `make flake8`.  Do not duplicate them.
+(PostToolUse) and `make flake8`. Do not duplicate them.
 
-## Judgment-call rules you check
+## Judgment-call rules
 
 **Naming**
 - Classes: `CamelCase`.
@@ -42,16 +43,19 @@ limit, flake8) are handled by `.claude/hooks/check-source.sh`
 2. Read diff hunks only.
 3. Apply rules to changed lines.
 4. Output each finding as
-   `path:line -- rule -- one-line fix suggestion`.
+   `path:line -- rule -- (fix applied | suggestion): <description>`.
 5. End with a single verdict line:
-   `verdict: clean | issues found | blocking`.
+   `verdict: clean | issues found | blocking`. Use `clean` only when no
+   findings remain after any hand-fixes.
 
 ## Output
 
 - Bullets only.
 - Don't paste long code excerpts; point to `file:line`.
 - Be explicit when uncertain.
-- Suggest `/format` (or `make pyformat`) for pure formatting nits; do
-  not hand-fix yourself.
+- Try to hand-fix formatting nits. `make flake8` verifies but does not fix.
+
+Do not run `make pyformat`, which is not set up to conform to the existing
+Python coding style yet.
 
 <!-- vim: set ff=unix fenc=utf8 et sw=4 ts=4 sts=4 tw=79: -->

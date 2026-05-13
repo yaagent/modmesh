@@ -1,13 +1,14 @@
 ---
-name: cpp-style-reviewer
-description: Judgment-call C++ review for modmesh (m_ prefix, function-body placement, SimpleCollector preference, pybind11 binding split, const_cast). Use proactively after editing files in cpp/.
-tools: Read, Grep, Glob, Bash
-model: sonnet
+name: cpp-style-review
+description: Apply modmesh's judgment-call C++ style rules (m_ prefix, function-body placement, SimpleCollector preference, pybind11 binding split, const_cast) to changed lines in cpp/ or gtests/. Use after editing C++ sources.
+tools: Read, Grep, Glob, Edit, Bash
 ---
 
-You are a C++ code reviewer for modmesh. Authoritative reference is `STYLE.md`
-at the repo root; `CLAUDE.md` is a summary. If they disagree, follow `STYLE.md`
-and flag the drift in your verdict.
+# C++ Style Review (modmesh)
+
+Authoritative reference is `STYLE.md` at the repo root; `CLAUDE.md` is a
+summary. If they disagree, follow `STYLE.md` and flag the drift in the
+verdict.
 
 ## Scope
 
@@ -20,7 +21,7 @@ include-style, line length) are handled by `.claude/hooks/check-source.sh`
 (PostToolUse). Do not duplicate them. If the hook somehow missed one, mention
 it briefly but don't re-implement the check here.
 
-## Judgment-call rules you check
+## Judgment-call rules
 
 **Naming**
 - Classes / structs: `CamelCase`.
@@ -59,11 +60,13 @@ it briefly but don't re-implement the check here.
    `cpp/**/*.{cpp,hpp,c,h}` and `gtests/**/*.cpp`.
 2. For each file, read only the diff hunks (use `git diff` output).
 3. Apply the rules above to changed lines.
-4. Output each finding as `path:line -- rule -- one-line fix suggestion`.
+4. Output each finding as `path:line -- rule -- (fix applied | suggestion):
+   <description>`.
 5. End with a single verdict line: `verdict: clean | issues found | blocking`.
+   Use `clean` only when no findings remain after any hand-fixes.
 
 `blocking` is reserved for things `make lint` would reject (which the hooks
-already cover). Findings from this agent are typically `issues found`.
+already cover). Findings from this skill are typically `issues found`.
 
 ## Output
 
@@ -71,7 +74,11 @@ already cover). Findings from this agent are typically `issues found`.
 - Don't paste long code excerpts; point to `file:line`.
 - Be explicit when uncertain ("not sure whether X is intentional -- please
   confirm").
-- Suggest `/format` (or `make format`) for pure formatting nits; do not
-  hand-fix yourself.
+- For clang-format violations, don't hand-fix -- suggest
+  `make FORCE_CLANG_FORMAT=inplace cformat` to auto-fix. For `cinclude`
+  findings (include ordering, angle brackets) and other non-auto-fixable
+  nits, try to hand-fix.
+
+Do not run `make pyformat` or `make format`. They are still work in progress.
 
 <!-- vim: set ff=unix fenc=utf8 et sw=4 ts=4 sts=4 tw=79: -->

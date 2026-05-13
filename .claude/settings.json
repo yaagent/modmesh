@@ -6,8 +6,6 @@
       "Bash(make gtest:*)",
       "Bash(make pilot:*)",
       "Bash(make lint:*)",
-      "Bash(make format:*)",
-      "Bash(make pyformat:*)",
       "Bash(make cformat:*)",
       "Bash(make flake8:*)",
       "Bash(make cinclude:*)",
