@@ -401,4 +401,24 @@ TEST(SimpleArray, mdspan_rank_mismatch)
     EXPECT_THROW(arr.as_mdspan<3>(), std::out_of_range);
 }
 
+TEST(SimpleArray, mdspan_non_contiguous)
+{
+    namespace mm = modmesh;
+
+    // Build a 3x4 view whose stride differs from the row-major layout, so the
+    // array is neither C- nor F-contiguous over the underlying buffer.
+    mm::small_vector<size_t> shape{3, 4};
+    mm::small_vector<size_t> stride{8, 1};
+    auto buffer = mm::ConcreteBuffer::construct(3 * 8 * sizeof(double));
+    mm::SimpleArray<double> arr(shape, stride, buffer);
+    EXPECT_FALSE(arr.is_c_contiguous());
+
+    EXPECT_THROW(arr.as_span(), std::runtime_error);
+    EXPECT_THROW(arr.as_mdspan<2>(), std::runtime_error);
+
+    const auto & carr = arr;
+    EXPECT_THROW(carr.as_span(), std::runtime_error);
+    EXPECT_THROW(carr.as_mdspan<2>(), std::runtime_error);
+}
+
 // vim: set ff=unix fenc=utf8 et sw=4 ts=4 sts=4:

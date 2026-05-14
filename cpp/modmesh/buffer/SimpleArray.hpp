@@ -1949,8 +1949,22 @@ public:
     template <typename... Args>
     value_type * vptr(Args... args) { return m_body + buffer_offset(m_stride, args...); }
 
-    std::span<value_type> as_span() { return std::span<value_type>(data(), size()); }
-    std::span<value_type const> as_span() const { return std::span<value_type const>(data(), size()); }
+    std::span<value_type> as_span()
+    {
+        if (!is_c_contiguous())
+        {
+            throw std::runtime_error("SimpleArray::as_span: array is not C-contiguous");
+        }
+        return std::span<value_type>(data(), size());
+    }
+    std::span<value_type const> as_span() const
+    {
+        if (!is_c_contiguous())
+        {
+            throw std::runtime_error("SimpleArray::as_span: array is not C-contiguous");
+        }
+        return std::span<value_type const>(data(), size());
+    }
 
     template <size_t N>
     std::mdspan<value_type, std::dextents<size_t, N>> as_mdspan()
@@ -1959,6 +1973,10 @@ public:
         {
             throw std::out_of_range(
                 std::format("SimpleArray::as_mdspan: rank {} does not match ndim() {}", N, ndim()));
+        }
+        if (!is_c_contiguous())
+        {
+            throw std::runtime_error("SimpleArray::as_mdspan: array is not C-contiguous");
         }
         std::array<size_t, N> exts;
         for (size_t i = 0; i < N; ++i) { exts[i] = shape(i); }
@@ -1972,6 +1990,10 @@ public:
         {
             throw std::out_of_range(
                 std::format("SimpleArray::as_mdspan: rank {} does not match ndim() {}", N, ndim()));
+        }
+        if (!is_c_contiguous())
+        {
+            throw std::runtime_error("SimpleArray::as_mdspan: array is not C-contiguous");
         }
         std::array<size_t, N> exts;
         for (size_t i = 0; i < N; ++i) { exts[i] = shape(i); }
@@ -2455,4 +2477,4 @@ private:
 
 } /* end namespace modmesh */
 
-/* vim: set et ts=4 sw=4: */
+// vim: set ff=unix fenc=utf8 et sw=4 ts=4 sts=4:
