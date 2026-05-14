@@ -12,13 +12,16 @@ runs:
     - name: Creates /usr/local/include for macos runner
       shell: bash
       run: |
+        echo "::group::Creates /usr/local/include for macos runner"
         # Some mac runner does not have /usr/local/include and cmake sometimes crashes
         sudo mkdir -p /usr/local/include
+        echo "::endgroup::"
 
     - name: dependency by homebrew
       if: "${{ inputs.workflow == 'lint' || inputs.workflow == 'build' }}"
       shell: bash
       run: |
+        echo "::group::dependency by homebrew"
         export HOMEBREW_NO_AUTO_UPDATE=1
         export HOMEBREW_NO_INSTALLED_DEPENDENTS_CHECK=1
         # This has been replaced by the 'install qt' section below to manage
@@ -36,6 +39,7 @@ runs:
         # Ref: https://github.com/actions/runner-images/blob/main/images/macos/macos-26-Readme.md
         ln -sf "$(brew --prefix llvm@22)/bin/clang-tidy" "/usr/local/bin/clang-tidy"
         rm -f /usr/local/bin/clang /usr/local/bin/clang++ /usr/local/bin/clang-format
+        echo "::endgroup::"
 
     - name: install qt
       if: "${{ inputs.workflow == 'lint' || inputs.workflow == 'build' }}"
@@ -54,41 +58,54 @@ runs:
     - name: dependency by pip (common)
       shell: bash
       run: |
+        echo "::group::dependency by pip (common)"
         echo "which python3: $(which python3)"
         ls -al $(which python3)
         # suppress the warning of pip because brew forces PEP668 since python3.12
         python3 -m pip -v install --break-system-packages --upgrade setuptools
         python3 -m pip -v install --break-system-packages --upgrade numpy matplotlib pytest flake8 jsonschema
+        echo "::endgroup::"
 
     - name: dependency by pip (lint & build)
       if: "${{ inputs.workflow == 'lint' || inputs.workflow == 'build' }}"
       shell: bash
       run: |
+        echo "::group::dependency by pip (lint & build)"
         # For now (2024/10/22), pyside6 6.6.3 does not support Python 3.13.
         # Use --ignore-requires-python to force installation.
         python3 -m pip -v install --upgrade pyside6==$(qmake -query QT_VERSION) --ignore-requires-python
+        echo "::endgroup::"
 
     - name: Install clang-format for lint
       if: ${{ inputs.workflow == 'lint' }}
       shell: bash
       run: |
+        echo "::group::Install clang-format for lint"
         # Pinned to the clang-format major version that the Makefile's
         # CLANG_FORMAT_CI_VERSION expects. Installed via pip so the same
         # package works on both Linux and macOS runners.
         python3 -m pip install --break-system-packages --upgrade 'clang-format==20.*'
         clang-format --version
+        echo "::endgroup::"
 
     - name: dependency (manual)
       shell: bash
-      run: sudo NO_INSTALL_PREFIX=1 ${GITHUB_WORKSPACE}/contrib/dependency/install.sh pybind11
+      run: |
+        echo "::group::dependency (manual)"
+        sudo NO_INSTALL_PREFIX=1 ${GITHUB_WORKSPACE}/contrib/dependency/install.sh pybind11
+        echo "::endgroup::"
 
     - name: dependency (manual) for build
       if: ${{ inputs.workflow == 'build' }}
       shell: bash
       run: |
+        echo "::group::dependency (manual) for build"
         thirdparty/metal-cpp.sh
+        echo "::endgroup::"
 
     - name: show dependency
       shell: bash
       run: |
+        echo "::group::show dependency"
         contrib/dependency/showdep.sh
+        echo "::endgroup::"

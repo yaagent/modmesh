@@ -13,6 +13,7 @@ runs:
       # Prevent hitting runner's resource limits when running clang-tidy
       shell: bash
       run: |
+        echo "::group::Add 12G swap"
         # Remove /swapfile first to avoid "fallocate: Text file busy" error
         sudo swapoff -a
         sudo rm -f /swapfile
@@ -21,6 +22,7 @@ runs:
         sudo mkswap /swapfile
         sudo swapon /swapfile
         free -h
+        echo "::endgroup::"
 
     - name: Cache Qt download
       if: "${{ inputs.workflow == 'lint' || inputs.workflow == 'build' }}"
@@ -35,6 +37,7 @@ runs:
     - name: dependency by apt
       shell: bash
       run: |
+        echo "::group::dependency by apt"
         # To update the cmake version > 4, install the latest cmake by kitware apt repository.
         # Reference: https://apt.kitware.com/
         sudo apt-get -y update
@@ -71,27 +74,32 @@ runs:
         #       qt6-3d-dev xvfb \
         #       libgl1-mesa-dev
         # fi
+        echo "::endgroup::"
 
     - name: Install clang-tidy for lint
       if: ${{ inputs.workflow == 'lint' }}
       shell: bash
       run: |
+        echo "::group::Install clang-tidy for lint"
         # Install clang-tidy-22 from LLVM repository for full C++23 support
         wget -qO- https://apt.llvm.org/llvm-snapshot.gpg.key | sudo tee /etc/apt/trusted.gpg.d/apt.llvm.org.asc
         echo "deb http://apt.llvm.org/noble/ llvm-toolchain-noble-22 main" | sudo tee /etc/apt/sources.list.d/llvm.list
         sudo apt-get -qqy update
         sudo apt-get -qy install clang-tidy-22
         sudo ln -fs "$(which clang-tidy-22)" "/usr/local/bin/clang-tidy"
+        echo "::endgroup::"
 
     - name: Install and configure gcc-14
       shell: bash
       run: |
+        echo "::group::Install and configure gcc-14"
         sudo apt-get -qqy update
         sudo apt-get -qy install gcc-14 g++-14
         sudo update-alternatives --install /usr/bin/gcc gcc /usr/bin/gcc-14 100
         sudo update-alternatives --install /usr/bin/g++ g++ /usr/bin/g++-14 100
         sudo update-alternatives --install /usr/bin/cc cc /usr/bin/gcc-14 100
         sudo update-alternatives --install /usr/bin/c++ c++ /usr/bin/g++-14 100
+        echo "::endgroup::"
 
     - name: install qt
       if: "${{ inputs.workflow == 'lint' || inputs.workflow == 'build' }}"
@@ -108,31 +116,42 @@ runs:
     - name: dependency by pip (common)
       shell: bash
       run: |
+        echo "::group::dependency by pip (common)"
         sudo pip3 install setuptools
         sudo pip3 install numpy pytest flake8
+        echo "::endgroup::"
 
     - name: dependency by pip (lint & build)
       if: "${{ inputs.workflow == 'lint' || inputs.workflow == 'build' }}"
       shell: bash
       run: |
+        echo "::group::dependency by pip (lint & build)"
         sudo pip3 install matplotlib jsonschema
         sudo pip3 install pyside6==$(qmake6 -query QT_VERSION)
+        echo "::endgroup::"
 
     - name: Install clang-format for lint
       if: ${{ inputs.workflow == 'lint' }}
       shell: bash
       run: |
+        echo "::group::Install clang-format for lint"
         # Pinned to the clang-format major version that the Makefile's
         # CLANG_FORMAT_CI_VERSION expects. Installed via pip so the same
         # package works on both Linux and macOS runners.
         sudo pip3 install 'clang-format==20.*'
         clang-format --version
+        echo "::endgroup::"
 
     - name: dependency (manual)
       shell: bash
-      run: sudo ${GITHUB_WORKSPACE}/contrib/dependency/install.sh pybind11
+      run: |
+        echo "::group::dependency (manual)"
+        sudo ${GITHUB_WORKSPACE}/contrib/dependency/install.sh pybind11
+        echo "::endgroup::"
 
     - name: show dependency
       shell: bash
       run: |
+        echo "::group::show dependency"
         contrib/dependency/showdep.sh
+        echo "::endgroup::"
